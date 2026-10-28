@@ -844,7 +844,14 @@ T.guarderia=[
 
 /* ================= Hub de tours: correo corporativo, selector, cierre con tours relacionados y leads ================= */
 document.head.insertAdjacentHTML('beforeend',`<style>
-.tip.pick{max-height:calc(100vh - 32px);overflow:auto}
+.tip.pick{max-height:calc(100vh - 32px);overflow:hidden}
+.tip.pick{--ph:clamp(124px,calc((100vh - 400px) / 2),236px)}
+.tip.pick .grp{margin:16px 0 6px}
+.tip.pick .chs.sub{margin-top:0;max-height:var(--ph);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(1,22,55,.28) transparent}
+.tip.pick .chs.sub::-webkit-scrollbar{width:8px}
+.tip.pick .chs.sub::-webkit-scrollbar-thumb{background:rgba(1,22,55,.25);border-radius:99px;border:2px solid #fff}
+.tip.pick .pane{position:relative}
+.tip.pick .pane.more::after{content:"";position:absolute;left:1px;right:1px;bottom:1px;height:26px;border-radius:0 0 11px 11px;background:linear-gradient(rgba(255,255,255,0),#fff);pointer-events:none}
 .tip .grp{margin:18px 0 8px;font-size:12px;font-weight:500;color:rgba(1,22,55,.5)}
 .fld{margin-top:20px;text-align:left}
 .fld input{width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(1,22,55,.14);border-radius:10px;padding:0 14px;font:400 15px Inter,system-ui,sans-serif;color:#0D1626;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
@@ -972,8 +979,11 @@ function submitEmail(){
 function picker(){
   setHash(null);hubTour=null;hubSeq=null;diveStack.length=0;showTrail();curPh=null;pulse.style.opacity=0;screen('catalog');
   center(`<div class="tb">${isoImg.replace('margin:0 auto','margin:0')}<h4>Elige un tour</h4><p>Cada uno dura un par de minutos. Empieza por el que más te interese.</p>
-   ${SECTIONS.map(g=>`${g.label?`<div class="grp">${g.label}</div>`:'<div style="height:14px"></div>'}<div class="chs">${g.tours.map(id=>rowHTML(id)).join('')}</div>`).join('')}</div></div>`);
+   ${SECTIONS.map(g=>g.label?`<div class="grp">${g.label}</div><div class="pane"><div class="chs sub">${g.tours.map(id=>rowHTML(id)).join('')}</div></div>`:`<div style="height:14px"></div><div class="chs">${g.tours.map(id=>rowHTML(id)).join('')}</div>`).join('')}</div></div>`);
   tip.classList.add('pick');
+  const mk=()=>tip.querySelectorAll('.pane').forEach(p=>{const c=p.firstElementChild;p.classList.toggle('more',c.scrollHeight-c.clientHeight>2&&c.scrollTop+c.clientHeight<c.scrollHeight-4)});
+  tip.querySelectorAll('.chs.sub').forEach(c=>c.addEventListener('scroll',mk,{passive:true}));
+  setTimeout(mk,60);window.addEventListener('resize',mk);
 }
 
 function startTour(id){
