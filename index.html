@@ -310,7 +310,7 @@ function content(ph,n,N,opts={}){
   tip.className='tip';
   const nx=ph.branch?`<span style="display:flex;gap:6px"><button class="tb-btn" data-a="no">No</button><button class="tb-btn red" data-a="yes">Sí</button></span>`
    :`<button class="tb-btn dark ${ph.click?'':'nudge'}" data-a="next" ${opts.off?'disabled':''}>${opts.label||(n===N-1&&cur==='manager'?'Siguiente':'Next')}</button>`;
-  const hint=ph.hint?`<div class="hint ${ph.click?'go':''}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-3a2 2 0 0 1 3-2l2 2"/></svg>${ph.hint}</div>`:'';
+  const hint='';   /* sin textos de pista: el borde palpitante ya indica dónde hacer clic */
   const dv=ph.dive&&CFG.hub?diveHTML(ph.dive):'';
   tip.innerHTML=`<div class="tb"><h4>${ph.h}</h4><p>${ph.p}</p>${hint}</div><div class="tf"><button class="tb-btn" data-a="back" ${opts.off?'disabled':''}>Back</button><span class="ct">${n+1} of ${N}</span><span style="display:flex;gap:8px;align-items:center">${dv}${nx}</span></div>`;
 }
