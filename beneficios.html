@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Product Tour Factorial - Benefits</title>
+<title>Benefits Product Tour</title>
 <link rel="icon" type="image/png" href="assets/factorial-isotipo.png">
 <link rel="stylesheet" href="capture/app.css">
 <style>
@@ -773,7 +773,7 @@ function track(evt,detail){
 
 const logoImg='<img src="assets/factorial-logo.png" alt="Factorial" style="height:18px;width:auto;display:block;margin:0 auto">';
 const isoImg='<img src="assets/factorial-isotipo.png" alt="Factorial" style="height:32px;width:32px;display:block;margin:0 auto">';
-const credit='<div class="pw"><img src="assets/factorial-isotipo.png" alt="" style="height:12px;width:12px;vertical-align:-2px;margin-right:6px">Product Tour Factorial - Hecho por Special Benefits Team</div>';
+const credit='<div class="pw"><img src="assets/factorial-isotipo.png" alt="" style="height:12px;width:12px;vertical-align:-2px;margin-right:6px">Benefits Product Tour - Hecho por Special Benefits Team</div>';
 
 function rowHTML(id,mini){
   const r=REG[id];
@@ -790,7 +790,7 @@ window.addEventListener('hashchange',()=>{if(!hubEmail||svOpen)return;const d=de
   if(d){if(d==='completo'?!hubSeq:d!==hubTour)startTour(d)}else if(!location.hash||location.hash==='#/')picker()});
 
 function gate(){
-  center(`<div class="tb" style="text-align:center">${logoImg}<h4>Product Tour Factorial</h4><p>Déjanos tu correo corporativo para empezar. Así podemos mandarte las novedades de Benefits.</p>
+  center(`<div class="tb" style="text-align:center">${logoImg}<h4>Benefits Product Tour</h4><p>Déjanos tu correo corporativo para empezar.</p>
    <div class="fld" id="fld"><input id="hubEmail" type="email" inputmode="email" autocomplete="email" placeholder="nombre@empresa.com" aria-label="Correo corporativo"><div class="ferr" id="ferr" hidden></div></div></div>
    <div class="tf"><button class="tb-btn red" data-h="email">Continuar</button></div>
    <div class="pw" style="padding:0 32px 14px">Al continuar aceptas que el equipo de Factorial te contacte sobre este producto.</div>${credit}`);
