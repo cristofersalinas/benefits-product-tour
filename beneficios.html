@@ -216,7 +216,7 @@ const hc=$s('healthcare'); let tpl=null, tbody=null;
   if(!row)return; tbody=row.parentElement; tpl=row.cloneNode(true);
 })();
 function setPill(el,state){const p=leaf(el,'Solicitado');if(!p)return;p.textContent=state;let n=p;
-  for(let i=0;i<4&&n&&n!==el;i++){n.style.background=STATES[state].bg;n.style.color=STATES[state].c;n=n.parentElement;if(n&&n.tagName==='TD')break}
+  for(let i=0;i<4&&n&&n!==el;i++){n.style.background=STATES[state].bg;n.style.color=STATES[state].c;n.style.borderRadius='999px';n=n.parentElement;if(n&&n.tagName==='TD')break}
   const dot=p.parentElement.querySelector('span');}
 function fillRows(states){
   if(!tbody)return; tbody.innerHTML='';
@@ -1172,11 +1172,11 @@ const ASEG=['Adeslas','Sanitas','AXA','Mapfre','DKV','Asisa','Cigna','Allianz','
 const SV={};
 SV.salud={
  render(){svFrame({eyebrow:'Seguro de salud · cuéntanos de tu empresa',right:'<button class="sv-go" data-sv="send">Enviar</button>',
-  body:`<h2>Seguro de salud</h2><p class="sv-intro">Cuatro preguntas rápidas.</p>`
-   +svQ(1,'¿Cuántos colaboradores tiene tu compañía?',`<input class="sv-in" type="number" min="1" inputmode="numeric" placeholder="Ej. 120" data-q="n">`)
-   +svQ(2,'¿Quién paga el seguro de salud hoy?',svOpts('pago',['Empresa','Colaboradores','Hoy no hay seguro']))
-   +`<div class="sv-cond" id="svAseg" hidden>`+svQ(3,'¿Qué aseguradora tienen?',`<select class="sv-in" data-q="aseg"><option value="">Selecciona una aseguradora…</option>${ASEG.map(a=>`<option>${a}</option>`).join('')}</select>`)+`</div>`
-   +svQ(4,'¿Ofrecen hoy gimnasio a sus colaboradores, con Wellhub?',svOpts('gym',['Sí','No']))});},
+  body:`<h2>Seguro de salud</h2><p class="sv-intro">Cuatro preguntas.</p>`
+   +svQ(1,'¿Nº de colaboradores?',`<input class="sv-in" type="number" min="1" inputmode="numeric" placeholder="Ej. 120" data-q="n">`)
+   +svQ(2,'¿Quién paga el seguro?',svOpts('pago',['Empresa','Colaboradores','Hoy no hay seguro']))
+   +`<div class="sv-cond" id="svAseg" hidden>`+svQ(3,'¿Aseguradora?',`<select class="sv-in" data-q="aseg"><option value="">Selecciona una aseguradora…</option>${ASEG.map(a=>`<option>${a}</option>`).join('')}</select>`)+`</div>`
+   +svQ(4,'¿Gimnasio con Wellhub?',svOpts('gym',['Sí','No']))});},
  submit(){svClear();let ok=true;const n=nOf(svAns('n')),pago=svAns('pago'),aseg=svAns('aseg'),gym=svAns('gym');
   if(n<1){svErr('n','Indica cuántos colaboradores tiene tu compañía.');ok=false}
   if(!pago){svErr('pago','Elige una opción.');ok=false}
@@ -1193,7 +1193,7 @@ SV.salud={
   svFrame({eyebrow:'Seguro de salud · tu empresa precalifica',right:'<button class="sv-go" data-sv="prizego">Continuar</button>',left:'<span class="sv-note">Responde estas dos preguntas para continuar.</span>',
    body:`<div class="sv-prize">${cf}<div class="sv-gift">${giftSvg}</div><h2>¡Felicidades!</h2><p class="big">Tu empresa <b>precalifica</b> para un regalo especial para toda su plantilla.</p>
     <div class="sv-alert"><b>!</b><span><b style="all:unset;font-weight:700">Importante:</b> la precalificación está sujeta a confirmación. Nuestro equipo la validará contigo.</span></div>
-    <div class="sv-two">${svQ(1,'¿Te interesa que te llamemos?',svOpts('call',['Sí','No']))}${svQ(2,'¿Te interesa saber más?',svOpts('more',['Sí','No']))}</div></div>`});},
+    <div class="sv-two">${svQ(1,'¿Te llamamos?',svOpts('call',['Sí','No']))}${svQ(2,'¿Quieres saber más?',svOpts('more',['Sí','No']))}</div></div>`});},
  prizego(){svClear();const c=svAns('call'),m=svAns('more');let ok=true;
   if(!c){svErr('call','Elige una opción.');ok=false}if(!m){svErr('more','Elige una opción.');ok=false}if(!ok)return;
   track('interes_llamada',c);track('interes_info',m);surveyClose();}
@@ -1202,10 +1202,10 @@ SV.salud={
 /* ---- GUARDERÍA ---- */
 SV.guarderia={
  render(){svFrame({eyebrow:'Guardería',right:'<button class="sv-go" data-sv="send">Enviar</button>',
-  body:`<h2>Guardería</h2><p class="sv-intro">Dos preguntas rápidas.</p>`
-   +svQ(1,'¿Cuántos hijos menores de 3 años tienen tus colaboradores?',svOpts('hijos',['Ninguno','De 1 a 5','De 6 a 20','Más de 20','No lo sé']))
-   +svQ(2,'¿Te interesa recibir información del equipo de guarderías?',svOpts('info',['Sí','No']))
-   +`<div class="sv-cond" id="svGInt" hidden>`+svQ(3,'¿Qué te interesa? Puedes elegir varias.',svOpts('inter',['Confirmar si las guarderías de mis colaboradores están en vuestra lista de afiliados','Resolver dudas específicas del producto'],true))+`</div>`});},
+  body:`<h2>Guardería</h2><p class="sv-intro">Dos preguntas.</p>`
+   +svQ(1,'¿Hijos menores de 3 años?',svOpts('hijos',['Ninguno','De 1 a 5','De 6 a 20','Más de 20','No lo sé']))
+   +svQ(2,'¿Quieres información de guarderías?',svOpts('info',['Sí','No']))
+   +`<div class="sv-cond" id="svGInt" hidden>`+svQ(3,'¿Qué te interesa?',svOpts('inter',['Confirmar si están en vuestra lista de afiliados','Resolver dudas del producto'],true))+`</div>`});},
  submit(){svClear();let ok=true;const h=svAns('hijos'),info=svAns('info'),inter=svAns('inter')||[];
   if(!h){svErr('hijos','Elige una opción.');ok=false}if(!info){svErr('info','Elige una opción.');ok=false}
   if(info==='Sí'&&!inter.length){svErr('inter','Elige al menos una opción.');ok=false}
@@ -1218,9 +1218,9 @@ SV.guarderia={
 /* ---- BENEFICIOS (más simple): interés en el ahorro de IRPF + dos correos corporativos ---- */
 SV.beneficios={
  render(){svFrame({eyebrow:'Beneficios flexibles',right:'<button class="sv-go" data-sv="send">Comenzar</button>',
-  body:`<h2>Beneficios flexibles</h2><p class="sv-intro">Una pregunta y dos correos de contacto.</p>`
-   +svQ(1,'¿Te interesa saber más del ahorro de impuestos (IRPF) en tus colaboradores?',svOpts('irpf',['Sí','No']))
-   +svQ(2,'Déjanos dos correos corporativos de tu empresa',`<div style="display:grid;gap:12px"><div><input class="sv-in" type="email" placeholder="Primer correo corporativo" autocomplete="email" data-q="e1"><div class="sv-err" hidden></div></div><div><input class="sv-in" type="email" placeholder="Segundo correo corporativo" autocomplete="email" data-q="e2"><div class="sv-err" hidden></div></div></div>`)});},
+  body:`<h2>Beneficios flexibles</h2><p class="sv-intro">Una pregunta y dos correos.</p>`
+   +svQ(1,'¿Te interesa el ahorro fiscal (IRPF)?',svOpts('irpf',['Sí','No']))
+   +svQ(2,'Dos correos corporativos',`<div style="display:grid;gap:12px"><div><input class="sv-in" type="email" placeholder="Primer correo corporativo" autocomplete="email" data-q="e1"><div class="sv-err" hidden></div></div><div><input class="sv-in" type="email" placeholder="Segundo correo corporativo" autocomplete="email" data-q="e2"><div class="sv-err" hidden></div></div></div>`)});},
  submit(){svClear();let ok=true;const irpf=svAns('irpf'),e1=svAns('e1').toLowerCase(),e2=svAns('e2').toLowerCase();
   if(!irpf){svErr('irpf','Elige una opción.');ok=false}
   const p1=emailProblem(e1),p2=emailProblem(e2);

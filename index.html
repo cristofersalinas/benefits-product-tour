@@ -186,7 +186,7 @@ const hc=$s('healthcare'); let tpl=null, tbody=null;
   if(!row)return; tbody=row.parentElement; tpl=row.cloneNode(true);
 })();
 function setPill(el,state){const p=leaf(el,'Solicitado');if(!p)return;p.textContent=state;let n=p;
-  for(let i=0;i<4&&n&&n!==el;i++){n.style.background=STATES[state].bg;n.style.color=STATES[state].c;n=n.parentElement;if(n&&n.tagName==='TD')break}
+  for(let i=0;i<4&&n&&n!==el;i++){n.style.background=STATES[state].bg;n.style.color=STATES[state].c;n.style.borderRadius='999px';n=n.parentElement;if(n&&n.tagName==='TD')break}
   const dot=p.parentElement.querySelector('span');}
 function fillRows(states){
   if(!tbody)return; tbody.innerHTML='';
