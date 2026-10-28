@@ -255,7 +255,13 @@ function wizSet(done){W.querySelectorAll('[data-v]').forEach(el=>{const t=el.id=
 
 /* ---- geometría: el foco y el tooltip se desplazan con transición ---- */
 function reposition(el,ph,inst){
-  const r=el.getBoundingClientRect(),P=8,ex=ph.extra||0,w=ph.w||340;
+  /* el bloque iluminado siempre cubre también el elemento con borde palpitante, aunque esté fuera de la sección que se explica */
+  const ce0=ph.click&&ph.click(),r0=el.getBoundingClientRect(),P=8,ex=ph.extra||0,w=ph.w||340;
+  let r=r0;
+  if(ce0&&ce0.getBoundingClientRect){const c=ce0.getBoundingClientRect();
+    if(c.width&&c.height&&!(c.left>=r0.left-2&&c.right<=r0.right+2&&c.top>=r0.top-2&&c.bottom<=r0.bottom+ex+2)){
+      const l=Math.min(r0.left,c.left),t=Math.min(r0.top,c.top),rr=Math.max(r0.right,c.right),b=Math.max(r0.bottom+ex,c.bottom);
+      r={left:l,top:t,right:rr,bottom:b-ex,width:rr-l,height:b-ex-t}}}
   spot.style.cssText+=`;left:${r.left-P}px;top:${r.top-P}px;width:${r.width+P*2}px;height:${r.height+P*2+ex}px;opacity:1`;
   scr.style.opacity=0;scr.style.pointerEvents='none';
   const ce=ph.click&&ph.click();
