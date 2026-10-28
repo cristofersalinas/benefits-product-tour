@@ -1034,10 +1034,11 @@ SV.beneficios={
 svEl.addEventListener('click',e=>{
   const o=e.target.closest('.sv-opt');
   if(o&&svEl.contains(o)){const w=o.parentElement;
-    if(w.dataset.multi)o.classList.toggle('on');else{w.querySelectorAll('.sv-opt').forEach(b=>b.classList.remove('on'));o.classList.add('on')}
+    if(w.dataset.multi)o.classList.toggle('on');else{const was=o.classList.contains('on');w.querySelectorAll('.sv-opt').forEach(b=>b.classList.remove('on'));if(!was)o.classList.add('on')}
+    const sel=w.querySelector('.sv-opt.on');
     const q=w.dataset.q;svErr(q,'');
-    if(q==='pago'){const c=svEl.querySelector('#svAseg');if(c)c.hidden=o.dataset.v!=='Empresa'}
-    if(q==='info'){const c=svEl.querySelector('#svGInt');if(c)c.hidden=o.dataset.v!=='Sí'}
+    if(q==='pago'){const c=svEl.querySelector('#svAseg');if(c)c.hidden=!sel||sel.dataset.v!=='Empresa'}
+    if(q==='info'){const c=svEl.querySelector('#svGInt');if(c)c.hidden=!sel||sel.dataset.v!=='Sí'}
     return}
   const a=e.target.closest('[data-sv]')?.dataset.sv;if(!a)return;
   if(a==='send')SV[svKey].submit();
