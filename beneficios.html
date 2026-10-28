@@ -79,6 +79,8 @@ html,body{height:100%;margin:0;overflow:hidden}
 #trail{position:fixed;left:16px;bottom:54px;z-index:9999;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(1,22,55,.1);border-radius:99px;padding:8px 14px 8px 10px;font:500 13px Inter,system-ui,sans-serif;color:#0D1626;box-shadow:0 8px 24px rgba(13,22,38,.14);pointer-events:none;white-space:nowrap;max-width:60vw;animation:trailin .45s cubic-bezier(.2,.8,.2,1) both}
 #trail span{color:rgba(1,22,55,.55);font-weight:400}
 @keyframes trailin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.tb-btn.dvb{width:32px;padding:0;display:grid;place-items:center;color:#0D1626}
+.tb-btn.dvb:disabled{opacity:.4}
 .dive{--db:34px;display:flex;align-items:stretch;gap:10px;width:100%;margin-top:12px;padding:8px 10px;border:1px dashed rgba(1,22,55,.28);border-radius:10px;background:#fff;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:background .15s,border-color .15s}
 .dive:hover{background:rgba(5,38,87,.04);border-color:#0D1626}
 .dive .dv-ic{width:var(--db);align-self:stretch;border-radius:8px;background:rgba(5,38,87,.06);display:grid;place-items:center;flex:none}
@@ -334,7 +336,7 @@ function content(ph,n,N,opts={}){
    :`<button class="tb-btn dark ${ph.click?'':'nudge'}" data-a="next" ${opts.off?'disabled':''}>${opts.label||(n===N-1&&cur==='manager'?'Siguiente':'Next')}</button>`;
   const hint=ph.hint?`<div class="hint ${ph.click?'go':''}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-3a2 2 0 0 1 3-2l2 2"/></svg>${ph.hint}</div>`:'';
   const dv=ph.dive&&CFG.hub?diveHTML(ph.dive):'';
-  tip.innerHTML=`<div class="tb"><h4>${ph.h}</h4><p>${ph.p}</p>${hint}${dv}</div><div class="tf"><button class="tb-btn" data-a="back" ${opts.off?'disabled':''}>Back</button><span class="ct">${n+1} of ${N}</span>${nx}</div>`;
+  tip.innerHTML=`<div class="tb"><h4>${ph.h}</h4><p>${ph.p}</p>${hint}</div><div class="tf"><button class="tb-btn" data-a="back" ${opts.off?'disabled':''}>Back</button><span class="ct">${n+1} of ${N}</span><span style="display:flex;gap:8px;align-items:center">${dv}${nx}</span></div>`;
 }
 function vscroller(el){let e=el.parentElement;while(e&&e!==document.documentElement){const o=getComputedStyle(e).overflowY;if((o==='auto'||o==='scroll'||o==='overlay')&&e.scrollHeight>e.clientHeight+2)return e;e=e.parentElement}return null}
 function centerV(el){const sc=vscroller(el);if(!sc)return;const r=el.getBoundingClientRect(),c=sc.getBoundingClientRect();
@@ -507,7 +509,7 @@ const rowJ=()=>upto(leaf(MT(),'Jéssica Rivera'),x=>x.tagName==='TR');
 T.genm=[
  {s:()=>screen('mcuentas'),
   t:()=>upto(leaf(MC(),'Entidad legal Barcelona'),x=>x.textContent.includes('Valencia')&&x.textContent.includes('Ver cuenta')&&!x.textContent.includes('Cuentas de')),pos:'bottom',dive:{id:'config'},
-  click:()=>leaf(MC(),'Empleados'),hint:'Haz clic en la pestaña «Empleados»',
+  click:()=>leaf(MC(),'Empleados'),
   h:'Una cuenta por entidad legal',p:'Cada entidad tiene su cuenta de gasto: ves el balance y sus tarjetas. Barcelona ya tiene cuenta y Valencia aún no.'},
  {s:()=>{screen('altas');showWiz(null);resetAltas()},
   t:()=>scrollBox(upto(leaf(ALT,'Bernarda Barrios'),x=>x.tagName==='TABLE')),pos:'top',dive:{id:'altas'},
@@ -659,7 +661,7 @@ T.config=[
  {s:()=>{screen('stripe');stripePage(6)},t:()=>spR(),pos:'left',hint:'Pulsa Next para volver a Factorial',
   h:'Revisión y envío',p:'Aquí se revisa todo y se envía la verificación. En este tour no enviamos nada: seguimos con la cuenta ya verificada.'},
  {s:()=>screen('mcuentas'),t:()=>upto(leaf(MCR(),'Entidad legal Barcelona'),x=>x.querySelector('button')&&x.textContent.includes('Ver cuenta')&&!x.textContent.includes('Valencia')),pos:'bottom',
-  click:()=>leaf(MCR(),'Empleados'),hint:'Haz clic en la pestaña «Empleados»',
+  click:()=>leaf(MCR(),'Empleados'),
   h:'Cuenta lista por entidad legal',p:'Cuando Stripe verifica la empresa, la cuenta aparece con su saldo y sus tarjetas. Ya se pueden añadir fondos y activar a las personas.'},
  {s:()=>{screen('altas');showWiz(null);resetAltas()},t:()=>byText(ALT,'button','Activar beneficios'),pos:'bottom',click:()=>byText(ALT,'button','Activar beneficios'),hint:'Haz clic en «Activar beneficios»',
   h:'Ahora, los límites del equipo',p:'Con la cuenta lista, activas los beneficios y fijas el límite de gasto de cada persona desde un asistente.'},
@@ -1003,8 +1005,8 @@ function seqNextModal(){
 }
 /* árbol de decisión: desde un tour general se puede abrir el tour específico (otra dirección) y volver */
 function diveHTML(d){
-  const r=REG[d.id],soon=!!r.soon;
-  return `<button class="dive" data-a="dive" data-id="${d.id}" ${soon?'disabled':''}><span class="dv-ic">${svgI('branch',16)}</span><span class="dv-tx"><small>${d.eyebrow||'Camino específico'}</small><b>${r.title}</b></span>${soon?'<em>Próximamente</em>':chevR}</button>`;
+  const r=REG[d.id],soon=!!r.soon,lbl='Camino específico: '+r.title+(soon?' (próximamente)':'');
+  return `<button class="tb-btn dvb" data-a="dive" data-id="${d.id}" title="${lbl}" aria-label="${lbl}" ${soon?'disabled':''}>${svgI('branch',16)}</button>`;
 }
 function showTrail(){
   if(!diveStack.length){trailEl.hidden=true;return}
