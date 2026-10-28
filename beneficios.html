@@ -855,6 +855,9 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .aud{display:inline-block;font-size:11px;line-height:16px;font-weight:600;padding:0 8px;border-radius:99px;margin-left:8px;vertical-align:1px}
 .aud.p{background:#DCFCE7;color:#15803D}
 .aud.c{background:#DBEAFE;color:#1D4ED8}
+.dvb{position:relative}
+.dvb::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);right:0;width:max-content;max-width:190px;white-space:normal;line-height:16px;background:#0D1626;color:#fff;font:500 12px Inter,system-ui,sans-serif;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s;box-shadow:0 6px 16px rgba(13,22,38,.2)}
+.dvb:hover::after,.dvb:focus-visible::after{opacity:1}
 .tip.pick{max-height:calc(100vh - 32px);overflow:hidden}
 .tip.pick{--ph:clamp(124px,calc((100vh - 400px) / 2),236px)}
 .tip.pick .grp{margin:16px 0 6px}
@@ -1017,8 +1020,8 @@ function seqNextModal(){
 }
 /* árbol de decisión: desde un tour general se puede abrir el tour específico (otra dirección) y volver */
 function diveHTML(d){
-  const r=REG[d.id],soon=!!r.soon,lbl='Camino específico: '+r.title+(soon?' (próximamente)':'');
-  return `<button class="tb-btn dvb" data-a="dive" data-id="${d.id}" title="${lbl}" aria-label="${lbl}" ${soon?'disabled':''}>${svgI('branch',16)}</button>`;
+  const r=REG[d.id],soon=!!r.soon,lbl='Camino específico: '+r.title+(soon?' (próximamente)':''),tip=soon?'Próximamente':'Ir al tour específico: '+r.title;
+  return `<button class="tb-btn dvb" data-a="dive" data-id="${d.id}" data-tip="${tip}" aria-label="${lbl}" ${soon?'disabled':''}>${svgI('branch',16)}</button>`;
 }
 function showTrail(){
   if(!diveStack.length){trailEl.hidden=true;return}
