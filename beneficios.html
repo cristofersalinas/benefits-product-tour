@@ -852,6 +852,9 @@ T.guarderia=[
 
 /* ================= Hub de tours: correo corporativo, selector, cierre con tours relacionados y leads ================= */
 document.head.insertAdjacentHTML('beforeend',`<style>
+.aud{display:inline-block;font-size:11px;line-height:16px;font-weight:600;padding:0 8px;border-radius:99px;margin-left:8px;vertical-align:1px}
+.aud.p{background:#DCFCE7;color:#15803D}
+.aud.c{background:#DBEAFE;color:#1D4ED8}
 .tip.pick{max-height:calc(100vh - 32px);overflow:hidden}
 .tip.pick{--ph:clamp(124px,calc((100vh - 400px) / 2),236px)}
 .tip.pick .grp{margin:16px 0 6px}
@@ -910,7 +913,7 @@ const REG={
  guarderia:{key:'guarderia',ico:'home',title:'Solicitud de guardería',sub:'Solicitar la guardería y ver su gasto',done:'Solicitud de guardería completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'}
 };
 /* Secciones del selector: el tour completo va arriba; después cada vista, con sus tours por caso de uso */
-const SECTIONS=[{label:null,tours:['completo']},{label:'Vista de manager',tours:['genm','config','altas','salud']},{label:'Vista de colaborador',tours:['genc','colab','guarderia']}];
+const SECTIONS=[{label:null,tours:['completo']},{label:'Vista de manager',tours:['genm','altas','salud','config']},{label:'Vista de colaborador',tours:['genc','colab','guarderia']}];
 /* Orden del tour completo: primero manager (general, configuración, beneficios, seguro) y luego colaborador. Los que no tienen contenido se saltan. */
 const SEQ=['genm','config','altas','salud','genc','colab','guarderia'];
 /* Qué sigue tras cada tour: de lo más conectado a lo menos; el cambio total de vista va al final */
@@ -955,9 +958,12 @@ const logoImg='<img src="assets/factorial-logo.png" alt="Factorial" style="heigh
 const isoImg='<img src="assets/factorial-isotipo.png" alt="Factorial" style="height:32px;width:32px;display:block;margin:0 auto">';
 const credit='<div class="pw"><img src="assets/factorial-isotipo.png" alt="" style="height:12px;width:12px;vertical-align:-2px;margin-right:6px">Benefits Product Tour - Hecho por Special Benefits Team</div>';
 
+/* etiqueta del selector: p = prospectos (verde), c = clientes (azul); la configuración de cuenta solo la ve quien ya contrató */
+const AUD={config:'c'};
+const AUD_LBL={p:'Prospecto',c:'Cliente'};
 function rowHTML(id,mini){
   const r=REG[id];
-  return `<button class="row" ${r.soon?'disabled':`data-h="pick" data-id="${id}"`}><span class="ic">${svgI(r.ico)}</span><span class="tx">${mini?'':`<small>${r.path}</small>`}<b>${r.title}</b><em>${r.sub}</em></span>${r.soon?'<span class="soon">Próximamente</span>':chevR}</button>`;
+  return `<button class="row" ${r.soon?'disabled':`data-h="pick" data-id="${id}"`}><span class="ic">${svgI(r.ico)}</span><span class="tx">${mini?'':`<small>${r.path}</small>`}<b>${r.title}<span class="aud ${AUD[id]||'p'}">${AUD_LBL[AUD[id]||'p']}</span></b><em>${r.sub}</em></span>${r.soon?'<span class="soon">Próximamente</span>':chevR}</button>`;
 }
 
 /* Enlaces directos: beneficios.html#/seguro-de-salud abre ese tour (tras el correo, si aún no lo dejó) */
