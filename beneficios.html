@@ -260,7 +260,7 @@ let cur='manager', i=-1, busy=false, curPh=null, warnT=null;
 let svOpen=false;   /* hay una encuesta abierta */
 const RESULTS={};   /* vista de resultado por tour */
 
-const ROUTE={catalog:'Operaciones › Beneficios › Visibilidad',healthcare:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud',approve:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud','emp-catalog':'Personal › Mis beneficios › Catálogo',drawer:'Personal › Mis beneficios › Catálogo',altas:'Operaciones › Beneficios › Empleados',cgastos:'Personal › Mis beneficios › Gastos',mcuentas:'Operaciones › Beneficios › Cuentas',muso:'Operaciones › Beneficios › Uso',mtarjetas:'Finanzas › Tesorería › Cuentas › Tarjetas',inicio:'Inicio',ccuentas:'Operaciones › Beneficios › Cuentas (sin cuenta)',stripe:'Stripe (enlace externo)'};
+const ROUTE={catalog:'Operaciones › Beneficios › Visibilidad',healthcare:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud',approve:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud','emp-catalog':'Personal › Mis beneficios › Catálogo',drawer:'Personal › Mis beneficios › Catálogo',altas:'Operaciones › Beneficios › Empleados',cgastos:'Personal › Mis beneficios › Gastos',mcuentas:'Operaciones › Beneficios › Cuentas',muso:'Operaciones › Beneficios › Uso',mtarjetas:'Finanzas › Tesorería › Cuentas › Tarjetas',inicio:'Inicio',ccuentas:'Operaciones › Beneficios › Cuentas (sin cuenta)',stripe:'Stripe (enlace externo)',childcare:'Guardería (página externa)'};
 let curScreen=null,navDir=1,navAxis='x',navMoved=false,navT=null,routeT=null;
 const pinSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>';
 function routeChip(to){const ps=to.split(' › '),last=ps.pop();routeEl.hidden=true;routeEl.offsetWidth;
@@ -677,6 +677,171 @@ T.config=[
   h:'Límites de gasto',p:'Cada persona hereda el límite de su categoría: 220 € al mes en comidas. Puedes personalizarlo o restablecerlo cuando quieras.'}
 ];
 
+/* ================= Tour Solicitud de guardería (vista de colaborador) =================
+   Catálogo -> «Solicitar» -> aviso de página externa -> formulario externo de 4 pasos (recreado a partir de la ventana real,
+   integrado en la misma ventana, datos ficticios y SIN enviar nada) -> historial de la tarjeta con el gasto de guardería. */
+document.head.insertAdjacentHTML('beforeend',`<style>
+.childcare{background:#F4F5F7;font-family:Inter,system-ui,-apple-system,sans-serif;color:#15152B;z-index:1;display:flex;justify-content:center;overflow:hidden}
+.childcare .ch-wrap{width:510px;max-width:94vw;padding-top:7vh;display:flex;flex-direction:column;align-items:stretch}
+.childcare .ch-logo{width:44px;height:44px;display:block;margin:0 auto 26px}
+.childcare .ch-card{background:#fff;border:1px solid #E3E5E9;border-radius:24px;padding:28px 28px 30px;box-sizing:border-box;max-height:calc(100vh - 7vh - 44px - 26px - 110px);overflow-y:auto;scrollbar-width:thin}
+.childcare h2{font-size:19px;line-height:26px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em;color:#1B1B35}
+.childcare .ch-prog{display:flex;align-items:center;gap:8px;margin:0 0 22px;font-size:12px;font-weight:500}
+.childcare .ch-bar{flex:1;height:7px;border-radius:99px;background:#D6EBEE;overflow:hidden}
+.childcare .ch-bar i{display:block;height:100%;background:#0B9EA8;border-radius:99px}
+.childcare .ch-warn{display:flex;gap:10px;align-items:center;background:#FDEBD2;border-radius:12px;padding:14px 16px;font-size:14px;margin:0 0 14px}
+.childcare .ch-btn{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:9px;border:1px solid #E1E4E8;background:#F4F5F7;font:500 13px Inter,system-ui,sans-serif;color:#15152B;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.childcare .ch-list{border:1px solid #E1E4E8;border-radius:14px;overflow:hidden;margin:0 0 14px}
+.childcare .ch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;min-height:44px;font-size:14px;font-weight:600;border-top:1px solid #E1E4E8;box-sizing:border-box}
+.childcare .ch-row:first-child{border-top:0}
+.childcare .ch-chk{width:15px;height:15px;border-radius:5px;border:1px solid #CBD0D6;background:#fff;flex:none;display:grid;place-items:center}
+.childcare .ch-chk.on{background:#0B9EA8;border-color:#0B9EA8}
+.childcare .ch-chk.on::after{content:"";width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.childcare .ch-nav{display:flex;justify-content:flex-end;gap:10px;margin:14px 0 0}
+.childcare .ch-primary{height:34px;padding:0 16px;border-radius:9px;border:0;background:#FF2D5A;color:#fff;font:600 14px Inter,system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px}
+.childcare .ch-primary.off{background:#FFA3B5}
+.childcare .ch-back{width:34px;height:34px;border-radius:9px;border:1px solid #E1E4E8;background:#fff;display:grid;place-items:center;color:#15152B}
+.childcare .ch-help{position:absolute;left:16px;bottom:18px;height:34px;padding:0 14px;border-radius:9px;background:#FF2D5A;color:#fff;font:600 13px Inter,system-ui,sans-serif;display:flex;align-items:center;gap:8px;border:0}
+.childcare .ch-search{background:#F4F5F7;padding:8px 8px;border-radius:14px 14px 0 0}
+.childcare .ch-search div{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E1E4E8;border-radius:9px;height:34px;padding:0 10px;font-size:13px;color:#6B7280}
+.childcare .ch-g{padding:12px 14px;font-size:14px;line-height:20px;border-top:1px solid #E1E4E8;cursor:default}
+.childcare .ch-g b{display:block;font-weight:600}
+.childcare .ch-d{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid #E1E4E8;font-size:14px;line-height:20px}
+.childcare .ch-d:first-child{border-top:0;font-weight:600}
+.childcare .ch-d svg{flex:none;color:#6B7280}
+.childcare .ch-lab{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
+.childcare .ch-in{height:36px;box-sizing:border-box;border:1px solid #E1E4E8;border-radius:9px;background:#fff;padding:0 12px;font-size:14px;display:flex;align-items:center;margin:0 0 14px;transition:border-color .15s,box-shadow .15s}
+.childcare .ch-in:empty::before{content:attr(data-ph);color:#9AA0AA}
+.childcare .ch-in.foc{border-color:#0B9EA8;box-shadow:0 0 0 3px rgba(11,158,168,.22)}
+.childcare .ch-months{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:0 0 16px}
+.childcare .ch-months span{height:32px;border-radius:9px;background:#F9F9FA;border:1px solid #EEF0F2;display:grid;place-items:center;font-size:14px;color:#8A909A;transition:background .2s,color .2s}
+.childcare .ch-months span.on{background:#0B9EA8;border-color:#0B9EA8;color:#fff;font-weight:600}
+.childcare .ch-yr{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.childcare .ch-yr .ch-in{flex:1;margin:0}
+.childcare .ch-yr b{font-size:16px}
+.childcare .ch-yr i{width:32px;height:32px;border:1px solid #E1E4E8;border-radius:9px;display:grid;place-items:center;font-style:normal;color:#6B7280;background:#F4F5F7}
+.childcare .ch-ok{display:flex;gap:10px;align-items:flex-start;border:1px solid #3B82F6;background:#E4F1FD;border-radius:12px;padding:11px 14px;font-size:14px;margin:0 0 10px;transition:opacity .2s}
+.childcare .ch-ok.off{background:#fff;border-color:#E1E4E8}
+.childcare .ch-ok small{display:block;color:#6B7280;font-size:13px;margin-top:2px}
+.childcare .ch-ok .bx{width:15px;height:15px;border-radius:4px;border:1px solid #CBD0D6;background:#fff;flex:none;margin-top:2px;display:grid;place-items:center}
+.childcare .ch-ok:not(.off) .bx{background:#3B82F6;border-color:#3B82F6}
+.childcare .ch-ok:not(.off) .bx::after{content:"";width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.childcare .ch-box{border:1px solid #E1E4E8;border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.childcare .ch-box h3{font-size:14px;font-weight:600;margin:0 0 10px}
+.childcare table{width:100%;border-collapse:collapse;font-size:13px;margin:0 0 12px}
+.childcare th{text-align:left;font-weight:500;color:#566074;padding:6px 0 8px;border-bottom:1px solid #E1E4E8}
+.childcare td{padding:8px 0}
+.childcare .ch-info{display:flex;gap:10px;background:#E4F1FD;border-radius:12px;padding:12px 14px;font-size:14px;line-height:20px;margin:0 0 8px}
+.childcare .ch-info.g{background:#F4F5F7}
+.childcare .ch-info svg{flex:none}
+.childcare .ch-imp{background:#E4F1FD;border-radius:14px;padding:14px 16px;font-size:14px;line-height:20px;margin:0 0 6px}
+.childcare .ch-imp b{display:block;font-size:15px;margin-bottom:6px}
+.childcare .ch-warn2{background:#FDEBD2;border-radius:14px;padding:14px 16px;margin:0 0 14px;font-size:14px;line-height:20px}
+.childcare .ch-warn2 b{display:block;font-size:15px;margin-bottom:4px;color:#7A3B00}
+/* aviso de página externa y modal de alta de familiar */
+#chAcc,#chFam{position:fixed;inset:0;z-index:4000;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,sans-serif;color:#15152B}
+#chAcc[hidden],#chFam[hidden]{display:none}
+#chAcc::before,#chFam::before{content:"";position:absolute;inset:0;background:rgba(13,22,38,.45)}
+.ch-mod{position:relative;background:#F4F5F7;border-radius:20px;box-shadow:0 20px 50px rgba(13,22,38,.28);padding:26px 22px 20px}
+.ch-mod .ico{position:absolute;left:22px;top:-26px;width:56px;height:56px;border-radius:16px;background:#fff;box-shadow:0 6px 16px rgba(13,22,38,.14);display:grid;place-items:center;color:#FF2D5A}
+.ch-mod .x{position:absolute;right:18px;top:18px;color:#444}
+#chAcc .ch-mod{width:320px;padding-top:44px}
+#chAcc h4,#chFam h4{font-size:17px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+#chAcc p{font-size:14px;line-height:20px;color:#4B5160;margin:0 0 18px}
+#chAcc .ft{border-top:1px solid #E1E4E8;margin:0 -22px;padding:14px 22px 0;display:flex;justify-content:flex-end}
+#chAcc .go{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:99px;border:1px solid #FF8FA6;background:#FFF0F3;color:#E61A42;font:500 13px Inter,system-ui,sans-serif}
+#chFam .ch-mod{width:440px;max-width:92vw;padding-top:46px}
+#chFam .ch-in{background:#F4F5F7}
+#chFam .ch-in.foc{background:#fff}
+</style>`);
+document.body.insertAdjacentHTML('beforeend',`<div id="chAcc" hidden><div class="ch-mod"><div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M8 20h5M10.5 16v4M19 8v6M16 11h6"/></svg></div><svg class="x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg><h4>Acceso a la página externa</h4><p>Se te redirigirá para que completes tu solicitud de beneficio de guardería.</p><div class="ft"><span class="go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Inicio</span></div></div></div>
+<div id="chFam" hidden><div class="ch-mod"><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M18 8v6M15 11h6"/></svg></div><svg class="x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg><h4 style="font-size:19px;margin-bottom:14px">Agregar un familiar</h4>
+ <label class="ch-lab">Nombre</label><div class="ch-in" data-v="Lucía" data-ph="Juan"></div>
+ <label class="ch-lab">Apellido</label><div class="ch-in" data-v="Hernández" data-ph="García"></div>
+ <label class="ch-lab">Fecha de nacimiento</label><div class="ch-in" data-v="14/05/2025" data-ph="dd/mm/yyyy"></div>
+ <label class="ch-lab">Nombre del padre, madre o tutor/a legal</label><div class="ch-in" data-v="Hellen Howard" data-ph="Persona que ha contactado con la guardería"></div>
+ <label class="ch-lab">Correo electrónico de contacto</label><div class="ch-in" data-v="hellen.howard@demo6a9c8805.com" data-ph="hola@roiward.io"></div>
+ <div style="display:flex;justify-content:flex-end;margin-top:6px"><span class="ch-primary" id="chFamBtn" style="height:36px;padding:0 18px">Añadir familiar</span></div></div></div>`);
+document.body.insertAdjacentHTML('afterbegin',`<div class="screen childcare" data-screen="childcare" hidden><div class="ch-wrap"><img class="ch-logo" src="assets/factorial-isotipo.png" alt=""><div class="ch-card" id="chCard"></div><div class="ch-nav" id="chNav"></div></div><span class="ch-help"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/></svg>Ayuda</span></div>`);
+
+const CHICO={home:'<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>',pin:'<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',tel:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',baby:'<circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1.5 1.2 4.5 1.2 6 0M12 3c-1 1-1 2 0 3"/>',q:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>',i:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>'};
+const chI=(n,c,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c||'currentColor'}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${CHICO[n]}</svg>`;
+const chProg=(n,t)=>`<h2>${t}</h2><div class="ch-prog"><div class="ch-bar"><i style="width:${n*25}%"></i></div>${n}/4</div>`;
+const chBtns=(o)=>`${o.back?`<span class="ch-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>`:''}<span class="ch-primary${o.off?' off':''}" id="chMain">${o.ext?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>':''}${o.label}</span>`;
+const CHGUARDS=[['Valencia Montessori School',"Av. Pío Baroja, 3, Campanar, 46015 València, Valencia"],['MARGON SCHOOL ALAMEDA',"Pg. de l'Albereda, 39, Camins al Grau, 46023 València, Valencia"],['Cotó School for Kids',"C/ d'Almassora, 74, Benimaclet, 46010 València, Valencia"],['Escuela infantil en Valencia International School La Aurora 2','Carrer de la Mascota, 15, Extramurs, 46007 València, Valencia'],['Escuela Infantil Dinoschool Benimaclet','C/ de Benicarló, 28, Benimaclet, 46020 València, Valencia'],['Superlittle Montessori School','València, Valencia']];
+const CHMESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const chPages={
+ empty:()=>({h:chProg(1,'Selecciona o añade familiares')+`<div class="ch-warn">${chI('warn','#D97706')}Aún no hay hijos. Por favor, añade uno.</div><span class="ch-btn" id="chAdd"><b style="font-weight:400;font-size:16px">+</b>Añadir familiar</span>`,n:{label:'Siguiente',off:1}}),
+ added:()=>({h:chProg(1,'Selecciona o añade familiares')+`<div class="ch-list"><div class="ch-row"><span>Lucía Hernández</span><span class="ch-chk on"></span></div></div><span class="ch-btn"><b style="font-weight:400;font-size:16px">+</b>Añadir familiar</span>`,n:{label:'Siguiente'}}),
+ list:()=>({h:chProg(2,'Selecciona una guardería')+`<div class="ch-list" style="margin:0"><div class="ch-search"><div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Búsqueda por nombre de guardería, ciudad o dirección</div></div>${CHGUARDS.map((g,k)=>`<div class="ch-g" data-g="${k}"><b>${g[0]}</b>${g[1]}</div>`).join('')}</div>`,n:{label:'Siguiente',off:1,back:1}}),
+ detail:()=>({h:chProg(2,'Selecciona una guardería')+`<div class="ch-list" style="margin:0"><div class="ch-d">${chI('home')}${CHGUARDS[0][0]}</div><div class="ch-d">${chI('pin')}${CHGUARDS[0][1]}</div><div class="ch-d">${chI('tel')}960 72 97 08</div><div class="ch-d">${chI('mail')}hello@valenciamontessori.org</div><div class="ch-d">${chI('link')}https://valenciamontessori.org/</div><div class="ch-d">${chI('clock')}<span>miércoles, De 8:00 a 18:00<br>jueves, De 8:00 a 18:00<br>viernes, De 8:00 a 18:00<br>sábado, Cerrado<br>domingo, Cerrado<br>lunes, De 8:00 a 18:00<br>martes, De 8:00 a 18:00</span></div></div>`,n:{label:'Siguiente',back:1}}),
+ time:(done)=>({h:chProg(3,'Tiempo de servicio')+`<div class="ch-yr"><div class="ch-in" id="chMes" data-ph="Selecciona los meses de servicio">${done?'dic 2026':''}</div><i>‹</i><b>2026</b><i style="background:#fff">›</i></div><div class="ch-months" id="chMonths">${CHMESES.map(m=>`<span data-m="${m}"${done&&m==='dic'?' class="on"':''}>${m}</span>`).join('')}</div><label class="ch-lab">Tipo de cuota</label><div class="ch-in" style="justify-content:space-between">Fija<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div><label class="ch-lab">Cantidad fija</label><div class="ch-in" id="chAmt" data-ph="Cantidad en Euros">${done?'350':''}</div><div class="ch-ok${done?'':' off'}" id="chOk1"><span class="bx"></span><span>¿Recibes la ayuda a madres trabajadoras? <span style="color:#6B7280">ⓘ</span><small>Sí, confirmo que estoy percibiendo la ayuda</small></span></div><div class="ch-ok${done?'':' off'}" id="chOk2"><span class="bx"></span><span>Sujeto a los <span style="color:#3B82F6">Términos y condiciones de Roiward</span></span></div>`,n:{label:'Siguiente',off:!done,back:1}}),
+ confirm:()=>({h:chProg(4,'Confirma tu solicitud')+`<div class="ch-list"><div class="ch-d">${chI('home')}${CHGUARDS[0][0]}</div><div class="ch-d">${chI('pin')}${CHGUARDS[0][1]}</div></div><div class="ch-list"><div class="ch-d" style="font-weight:400">${chI('baby')}Lucía Hernández</div></div><div class="ch-box" id="chDet"><h3>Detalles del servicio</h3><table><tr><th>Mes efectivo</th><th>Cantidad</th><th>Fecha de cobro</th></tr><tr><td>dic 2026</td><td>350 €</td><td>28 nov 2026</td></tr></table><div class="ch-info">${chI('q','#3B82F6',22)}<span>El pago a la guardería se hará durante la primera semana (hasta el día 5) del mes efectivo.</span></div><div class="ch-info g">${chI('i','#6B7280',22)}<span>Confirmo que estoy percibiendo la ayuda a madres trabajadoras</span></div></div><div class="ch-imp"><b>Información importante</b>Tras la confirmación, será redirigido a una pasarela de pago segura, donde se registrará su información de pago para procesar pagos recurrentes. Se realizará un pago de 0 € con el único fin de registrar la tarjeta.</div>`,n:{label:'Confirmar solicitud',back:1}}),
+ done:()=>({h:`<h2 style="margin-bottom:18px">Petición en proceso</h2><div class="ch-warn2" id="chWarn"><b>${chI('warn','#E86A00',20).replace('<svg','<svg style="vertical-align:-4px;margin-right:6px"')}No podemos confirmar la orden</b>Tenemos que revisar ciertos datos con la guardería antes de confirmar la petición. Te avisamos en cuanto tengamos todo listo.</div><div class="ch-box"><h3>Detalles de la guardería</h3><div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E1E4E8">${chI('home')}${CHGUARDS[0][0]}</div><div style="display:flex;align-items:center;gap:10px;padding:8px 0 0">${chI('pin')}${CHGUARDS[0][1]}</div></div><div class="ch-box"><h3>Información de los familiares</h3><div style="display:flex;align-items:center;gap:10px">${chI('baby')}Lucía Hernández</div></div>`,n:{label:'Ver peticiones',ext:1}})
+};
+const CHS=()=>$s('childcare'), chCard=()=>document.getElementById('chCard'), chMain=()=>document.getElementById('chMain');
+function chPage(k,arg){const p=chPages[k](arg);chCard().innerHTML=p.h;chCard().scrollTop=0;document.getElementById('chNav').innerHTML=chBtns(p.n)}
+function chAcc(on){document.getElementById('chAcc').hidden=!on}
+function chFam(on){document.getElementById('chFam').hidden=!on;if(!on)document.querySelectorAll('#chFam .ch-in').forEach(e=>{e.textContent='';e.classList.remove('foc')})}
+const chFamIn=()=>[...document.querySelectorAll('#chFam .ch-in')];
+async function chFamFill(){for(const el of chFamIn()){el.classList.add('foc');el.textContent='';for(const c of el.dataset.v){el.textContent+=c;await sleep(13)}await sleep(50);el.classList.remove('foc')}}
+function chFamNow(){chFamIn().forEach(el=>{el.textContent=el.dataset.v})}
+async function chTimeFill(){const m=chCard().querySelector('[data-m="dic"]');m.classList.add('on');
+  const a=document.getElementById('chMes');a.classList.add('foc');a.textContent='dic 2026';await sleep(250);a.classList.remove('foc');
+  const f=document.getElementById('chAmt');f.classList.add('foc');for(const c of '350'){f.textContent+=c;await sleep(40)}f.classList.remove('foc');
+  await sleep(150);document.getElementById('chOk1').classList.remove('off');await sleep(180);document.getElementById('chOk2').classList.remove('off');
+  document.getElementById('chMain').classList.remove('off')}
+
+/* resultado: la plataforma tal como queda con la solicitud aprobada y el pago hecho, en el historial de gastos (Mis beneficios › Gastos) */
+RESULTS.guarderia={s:()=>{screen('cgastos');ptlShow('cgastos',false);
+  const root=CG(),tb=upto(leaf(root,'Concepto'),x=>x.tagName==='TABLE');
+  if(tb&&!tb.querySelector('tr[data-gd]')){const r=tb.querySelector('tbody tr');
+    if(r){const c=r.cloneNode(true);c.dataset.gd='1';
+      const map={'Plan AXA - Empleado':'Valencia Montessori School','24/10/2026':'28/11/2026','41,67\u00a0€':'350,00\u00a0€','Seguro de salud':'Guardería'};
+      c.querySelectorAll('*').forEach(e=>{if(e.children.length===0){const t=e.textContent.trim();if(map[t])e.textContent=map[t]}});
+      r.parentElement.insertBefore(c,r)}}
+  const n=leaf(root,'2 transacciones');if(n)n.textContent='3 transacciones';
+  const row=tb&&tb.querySelector('tr[data-gd]');if(row)setTimeout(()=>{const sc=vscroller(row);if(sc)sc.scrollTo({top:Math.max(0,row.offsetTop-160),behavior:'smooth'})},500)}};
+
+T.guarderia=[
+ {s:()=>{chAcc(false);screen('emp-catalog')},
+  t:()=>catCard('Guardería'),pos:'right',click:()=>byText(catCard('Guardería'),'button','Solicitar'),hint:'Haz clic en «Solicitar»',
+  h:'Solicita la guardería',p:'Desde el catálogo, el botón «Solicitar» de la ficha de Guardería inicia el proceso.'},
+ {s:()=>{screen('emp-catalog');chAcc(true)},
+  t:()=>document.querySelector('#chAcc .ch-mod'),pos:'right',click:()=>document.querySelector('#chAcc .go'),hint:'Haz clic en «Inicio»',
+  h:'Se abre una página externa',p:'La solicitud se completa en la página de nuestro proveedor de guarderías. Aquí la ves dentro de la misma ventana.'},
+ {s:()=>{chAcc(false);chFam(false);screen('childcare');chPage('empty')},
+  t:()=>chCard(),pos:'right',click:()=>document.getElementById('chAdd'),hint:'Haz clic en «Añadir familiar»',
+  h:'Paso 1 de 4: tu hijo o hija',p:'Primero indicas para quién es la plaza. Si no hay nadie registrado, se añade desde aquí.'},
+ {s:()=>{screen('childcare');chPage('empty');chFam(true)},instant:()=>chFamNow(),
+  t:()=>document.querySelector('#chFam .ch-mod'),pos:'right',click:()=>chFamIn()[0],hint:'Haz clic en el primer campo',
+  h:'Datos del familiar',p:'Nombre, fecha de nacimiento, persona de contacto y correo. En el tour se rellena todo de una vez con datos de ejemplo.',
+  act:async()=>{lock();await chFamFill()},
+  after:{t:()=>document.getElementById('chFamBtn'),pos:'right',click:()=>document.getElementById('chFamBtn'),hint:'Haz clic en «Añadir familiar»',
+   h:'Datos completos',p:'Con los datos puestos, se añade al familiar a la lista.'}},
+ {s:()=>{chFam(false);screen('childcare');chPage('added')},
+  t:()=>chCard(),pos:'right',click:()=>chMain(),hint:'Haz clic en «Siguiente»',
+  h:'Familiar añadido',p:'Queda seleccionado y ya se puede continuar al siguiente paso.'},
+ {s:()=>{screen('childcare');chPage('list')},
+  t:()=>chCard(),pos:'right',click:()=>chCard().querySelector('[data-g="0"]'),hint:'Haz clic en una guardería',
+  h:'Paso 2 de 4: elige la guardería',p:'Puedes buscar por nombre, ciudad o dirección. Elige la que prefieras de la lista.',
+  act:async()=>{lock();chPage('detail');await sleep(350)},
+  after:{t:()=>chCard(),pos:'right',click:()=>chMain(),hint:'Haz clic en «Siguiente»',
+   h:'Ficha de la guardería',p:'Ves su dirección, teléfono, correo, web y horarios antes de confirmar tu elección.'}},
+ {s:()=>{screen('childcare');chPage('time',false)},instant:()=>chPage('time',true),
+  t:()=>chCard(),pos:'right',click:()=>chCard().querySelector('[data-m="dic"]'),hint:'Haz clic en un mes de servicio',
+  h:'Paso 3 de 4: tiempo de servicio',p:'Eliges los meses, el tipo de cuota (fija) y la cantidad. En el tour se completa todo con un solo clic.',
+  act:async()=>{lock();await chTimeFill()},
+  after:{t:()=>chCard(),pos:'right',click:()=>chMain(),hint:'Haz clic en «Siguiente»',
+   h:'Servicio definido',p:'Mes de servicio, cuota y confirmaciones listos: sigue al resumen.'}},
+ {s:()=>{screen('childcare');chPage('confirm')},
+  t:()=>document.getElementById('chDet'),pos:'right',click:()=>chMain(),hint:'Haz clic en «Confirmar solicitud»',
+  h:'Paso 4 de 4: confirma la solicitud',p:'El resumen indica el mes efectivo, la cantidad y la fecha de cobro. Al confirmar, la solicitud se envía a la guardería.'},
+ {s:()=>{screen('childcare');chPage('done')},
+  t:()=>document.getElementById('chWarn'),pos:'right',hint:'Pulsa Next para terminar',
+  h:'Petición en proceso',p:'La guardería revisa ciertos datos antes de confirmar la plaza. Una vez aprobada y pagada, verás el pago en tu historial de gastos.'}
+];
+
 /* ================= Hub de tours: correo corporativo, selector, cierre con tours relacionados y leads ================= */
 document.head.insertAdjacentHTML('beforeend',`<style>
 .tip.pick{max-height:calc(100vh - 32px);overflow:auto}
@@ -727,7 +892,7 @@ const REG={
  /* Vista de colaborador */
  genc:{key:'genc',ico:'layout',title:'General',sub:'Gastos, tarjeta y catálogo de beneficios',done:'General completado',path:'Personal › Mis beneficios',role:'Vista de colaborador'},
  colab:{key:'employee',ico:'user',title:'Solicitud de seguro de salud',sub:'Solicitar el seguro y añadir dependientes',done:'Solicitud de seguro de salud completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'},
- guarderia:{soon:true,ico:'home',title:'Solicitud de guardería',sub:'Solicitar la guardería y ver su gasto',done:'Solicitud de guardería completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'}
+ guarderia:{key:'guarderia',ico:'home',title:'Solicitud de guardería',sub:'Solicitar la guardería y ver su gasto',done:'Solicitud de guardería completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'}
 };
 /* Secciones del selector: el tour completo va arriba; después cada vista, con sus tours por caso de uso */
 const SECTIONS=[{label:null,tours:['completo']},{label:'Vista de manager',tours:['genm','config','altas','salud']},{label:'Vista de colaborador',tours:['genc','colab','guarderia']}];
