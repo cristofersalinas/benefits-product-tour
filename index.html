@@ -73,6 +73,10 @@ html,body{height:100%;margin:0;overflow:hidden}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 .tip.shake{animation:shake .45s}
 #warn{position:fixed;left:50%;top:64px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:#FFF4E0;border:1px solid #F5C77A;color:#7A4A00;padding:10px 16px;border-radius:12px;font:500 14px Inter,system-ui,sans-serif;box-shadow:0 8px 24px rgba(13,22,38,.18);pointer-events:none;animation:fin .2s}
+#resultHint{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:#0D1626;color:#fff;border-radius:99px;padding:10px 18px 10px 14px;font:500 13px Inter,system-ui,sans-serif;box-shadow:0 10px 28px rgba(13,22,38,.28);pointer-events:none;white-space:nowrap;max-width:92vw;animation:hintin .5s cubic-bezier(.2,.8,.2,1) both}
+#resultHint span{color:rgba(255,255,255,.62);font-weight:400}
+#resultHint svg{flex:none}
+@keyframes hintin{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
 #warn b{width:20px;height:20px;border-radius:99px;background:#F5A524;color:#fff;display:grid;place-items:center;font-size:12px;flex:none}
 @keyframes fin{from{opacity:0}to{opacity:1}}
 #wizard:not([hidden]){animation:fin .25s}
@@ -150,6 +154,10 @@ document.querySelectorAll('.screen').forEach(sc=>{
 /* ---- catálogo manager: el seguro aún no tiene plan en el relato ---- */
 {const sc=$s('catalog');const b=leaf(sc,'Gestionar plan');if(b)b.textContent='Crear plan'}
 
+/* ---- la plataforma muestra «Aprobar inscripción» solo al pasar el cursor por la fila: aquí se simula ---- */
+function hoverRow(on){const r=tbody&&tbody.querySelector('tr');if(!r)return;r.classList.toggle('bg-f1-background-hover',on);
+  const a=r.querySelector('td aside');if(a){a.style.transition='opacity .45s ease';a.style.opacity=on?'1':''}}
+const approveBtn=()=>[...tbody.querySelector('tr').querySelectorAll('button')].find(b=>b.textContent.includes('Aprobar'));
 /* ---- tabla de inscripciones (manager) ---- */
 const hc=$s('healthcare'); let tpl=null, tbody=null;
 (function(){
@@ -195,9 +203,12 @@ document.body.insertAdjacentHTML('beforeend',wizHTML);
 /* ================= Motor del tour ================= */
 const $=q=>document.querySelector(q), W=$('#wizard'), wz=id=>document.getElementById(id), sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const tour=$('#tour');
-tour.innerHTML='<div class="blocker"></div><div class="scrim" id="scr"></div><div id="spot"></div><div id="pulse"></div><div class="tip" id="tip"></div><div id="warn" role="alert" hidden></div><div id="route" hidden></div>';
-const spot=$('#spot'),tip=$('#tip'),scr=$('#scr'),pulse=$('#pulse'),warnEl=$('#warn'),routeEl=$('#route');
+const lock=()=>tip.querySelectorAll('button').forEach(b=>b.disabled=true);
+async function typeInto(el,text,per=29){const t=el.id==='w3'?el.firstElementChild:el;el.classList.remove('ph');t.textContent='';for(const ch of text){t.textContent+=ch;await sleep(per)}await sleep(145)}
+tour.innerHTML='<div class="blocker"></div><div class="scrim" id="scr"></div><div id="spot"></div><div id="pulse"></div><div class="tip" id="tip"></div><div id="warn" role="alert" hidden></div><div id="route" hidden></div><div id="resultHint" hidden></div>';
+const spot=$('#spot'),tip=$('#tip'),scr=$('#scr'),pulse=$('#pulse'),warnEl=$('#warn'),routeEl=$('#route'),resultEl=$('#resultHint');
 let cur='manager', i=-1, busy=false, curPh=null, warnT=null;
+const RESULTS={};   /* vista de resultado por tour */
 
 const ROUTE={catalog:'Operaciones › Beneficios › Visibilidad',healthcare:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud',approve:'Operaciones › Beneficios › Visibilidad › Gestionar plan de salud','emp-catalog':'Personal › Mis beneficios › Catálogo',drawer:'Personal › Mis beneficios › Catálogo',altas:'Operaciones › Beneficios › Empleados'};
 let curScreen=null,navDir=1,navMoved=false,navT=null,routeT=null;
@@ -259,9 +270,12 @@ function reposition(el,ph,inst){
 async function follow(el,ph,ms){spot.classList.add('trk');tip.classList.add('trk');const t0=performance.now();
   await new Promise(res=>{(function f(){reposition(el,ph);performance.now()-t0<ms?setTimeout(f,16):res()})()});
   spot.classList.remove('trk');tip.classList.remove('trk')}
-function center(html){curPh=null;pulse.style.opacity=0;tip.classList.remove('trk');tip.className='tip center';tip.innerHTML=html;tip.style.width='480px';
+function center(html){curPh=null;pulse.style.opacity=0;tip.classList.remove('trk');tip.className='tip center';tip.innerHTML=html;
   spot.style.opacity=0;scr.style.opacity=1;scr.style.pointerEvents='auto';
-  tip.style.left=(innerWidth-480)/2+'px';tip.style.top=Math.max(16,(innerHeight-tip.offsetHeight)/2)+'px';tip.style.opacity=1}
+  /* el modal se coloca ya en su sitio, sin transición, para medirlo con su ancho final y dejarlo siempre centrado */
+  tip.style.transition='none';tip.style.width='480px';
+  tip.style.left=(innerWidth-480)/2+'px';tip.style.top=Math.max(16,(innerHeight-tip.offsetHeight)/2)+'px';tip.style.opacity=1;
+  tip.getBoundingClientRect();tip.style.transition=''}
 
 /* ---- contenido del tooltip ---- */
 function content(ph,n,N,opts={}){
@@ -291,22 +305,22 @@ const T={
   {s:()=>screen('catalog'),t:()=>leaf($s('catalog'),'Crear plan').closest('button'),pos:'top',click:()=>leaf($s('catalog'),'Crear plan').closest('button'),hint:'Haz clic en «Crear plan»',h:'Crea el plan',p:'Desde Operaciones → Beneficios → Visibilidad activas el seguro de salud. Un plan es la póliza que tienes con tu aseguradora y se configura en menos de un minuto.'},
   {s:()=>{screen('catalog',true);W.hidden=false;wz('wmenu').hidden=true;wz('wzmain').scrollTop=0},
    pre:()=>wizSet(false), instant:()=>wizSet(true),
-   t:()=>wz('wzmain'),pos:'left',h:'Vamos a rellenar el plan',p:'Pulsa Next y completamos los datos por ti.',hint:'Pulsa Next para rellenar los datos',
-   act:async(S)=>{
-     const ph={pos:'left',w:340,extra:0};
-     const t0=$('#tip');tip.querySelector('h4').textContent='Rellenando datos…';tip.querySelector('p').textContent='Proveedor, nombre del plan y fecha de renovación.';
-     tip.querySelectorAll('button').forEach(b=>b.disabled=true);
-     for(const id of ['w1','w2','w3']){const el=wz(id),t=id==='w3'?el.firstElementChild:el;el.classList.remove('ph');t.textContent='';
-       reposition(el,{...ph,pos:'left'});await sleep(260);
-       for(const ch of el.dataset.v){t.textContent+=ch;await sleep(32)} await sleep(160)}
-     wz('wcont').classList.remove('off');
-   },
-   after:{t:()=>wz('wcont'),pos:'top',click:()=>wz('wcont'),hint:'Haz clic en «Continuar»',h:'Plan completo',p:'Con todos los datos, Continuar queda habilitado.'}},
+   t:()=>wz('w1'),pos:'left',click:()=>wz('w1'),hint:'Haz clic en el campo «Proveedor»',h:'Rellena el plan',p:'Empezamos por el proveedor de la póliza.',
+   act:async()=>{lock();await typeInto(wz('w1'),wz('w1').dataset.v)},
+   after:{t:()=>wz('w2'),pos:'left',click:()=>wz('w2'),hint:'Haz clic en «Nombre del plan»',h:'Nombre del plan',p:'Es el nombre con el que lo verá tu equipo.',
+    act:async()=>{lock();await typeInto(wz('w2'),wz('w2').dataset.v)},
+    after:{t:()=>wz('w3'),pos:'left',click:()=>wz('w3'),hint:'Haz clic en «Fecha de renovación»',h:'Fecha de renovación',p:'Indica cuándo se renueva la póliza.',
+     act:async()=>{lock();await typeInto(wz('w3'),wz('w3').dataset.v);wz('wcont').classList.remove('off')},
+     after:{t:()=>wz('wcont'),pos:'top',click:()=>wz('wcont'),hint:'Haz clic en «Continuar»',h:'Plan completo',p:'Con todos los datos, Continuar queda habilitado.'}}}},
   {s:()=>{screen('catalog',true);W.hidden=false;wizSet(true);wz('wmenu').hidden=true},
    scroll:()=>wz('wzmain').scrollTo({top:wz('wzmain').scrollHeight,behavior:'smooth'}),end:()=>{wz('wmenu').hidden=false},
    t:()=>wz('wgest'),extra:150,pos:'left',click:()=>wz('wgest'),hint:'Haz clic en el selector «Gestión de planes»',h:'Tú eliges quién gestiona el seguro',p:'Si ya tienes seguro, nos integramos con tu bróker y seguimos las altas. Si no, lo gestionamos nosotros de principio a fin.'},
   {s:()=>{screen('healthcare');window.__live=true;fillRows(['Solicitado','Activo','Pendiente de activación','Rechazado','Cancelado'])},t:()=>{let e=leaf(hc,'Inscripciones activas');while(e&&!e.textContent.includes('Solicitudes pendientes'))e=e.parentElement;return e},pos:'top',click:()=>leaf(hc,'Solicitudes pendientes').closest('button'),hint:'Haz clic en «Solicitudes pendientes»',h:'Todas las inscripciones, un estado por fila',p:'Solicitado, pendiente de activación, activo, rechazado o cancelado. Filtra por estado con un clic.'},
-  {s:()=>{screen('healthcare');fillRows(['Solicitado'])},t:()=>tbody.querySelector('tr'),pos:'top',click:()=>tbody.querySelector('tr'),hint:'Haz clic en la solicitud de Hellen',h:'Aprueba la solicitud',p:'Cada solicitud nueva llega aquí. Revisas y apruebas en dos clics.'},
+  {s:()=>{screen('healthcare');fillRows(['Solicitado'])},pre:()=>hoverRow(false),instant:()=>hoverRow(true),
+   t:()=>tbody.querySelector('tr'),pos:'top',click:()=>tbody.querySelector('tr'),hint:'Pasa el cursor por la solicitud de Hellen (haz clic en la fila)',
+   h:'Encuentra la solicitud',p:'Cada solicitud nueva aparece como «Solicitado». Al pasar el cursor por la fila aparece el botón para aprobarla.',
+   act:async()=>{lock();hoverRow(true);await sleep(700)},
+   after:{t:()=>approveBtn(),pos:'left',click:()=>approveBtn(),hint:'Haz clic en «Aprobar inscripción»',h:'Aprueba la inscripción',p:'El botón solo se ve al pasar el cursor por la fila. Al pulsarlo eliges desde qué fecha empieza la cobertura.'}},
   {s:()=>screen('approve'),t:()=>leaf($s('approve'),'Desglose mensual de la compensación').closest('[class*=rounded]'),pos:'right',hint:'Pulsa Siguiente para continuar',h:'Fecha de cobertura y coste',p:'Eliges el día 1 del mes de inicio y ves el reparto entre empresa y persona antes de confirmar.'}
  ],
  employee:[
@@ -314,6 +328,16 @@ const T={
   {s:()=>screen('drawer'),t:()=>byText($s('drawer'),'button','Añadir dependientes'),pos:'top',branch:true,hint:'Elige Sí o No en el tooltip',h:'¿Quieres añadir dependientes?',p:'Pareja o hijos, en el mismo plan.'}
  ]
 };
+/* tarjetas del plan: cambian al aprobar la inscripción */
+const STAT0=[];['0,00 €','0.0%'].forEach(t=>[...hc.querySelectorAll('*')].filter(e=>e.children.length===0&&e.textContent.trim()===t).forEach(e=>STAT0.push([e,t])));
+[...hc.querySelectorAll('*')].filter(e=>e.children.length===0&&/^(0 empleados|Basado en 0)/.test(e.textContent.trim())).forEach(e=>STAT0.push([e,e.textContent.trim()]));
+const STAT1={'0,00 €':'50,00 €','0.0%':'2.1%'};
+function setStats(on){STAT0.forEach(([e,t])=>{e.textContent=on?(STAT1[t]||t.replace('0 empleados • 0 dependientes • 0 total','1 empleado • 0 dependientes • 1 total').replace('Basado en 0 empleados','Basado en 1 empleado')):t})}
+RESULTS.manager={s:()=>{screen('healthcare');window.__live=true;
+  const bak=JSON.stringify(PEOPLE),h=PEOPLE['Solicitado'].shift();PEOPLE['Activo'].unshift([h[0],h[1],h[2],'01 nov 2026']);
+  fillRows(['Activo','Solicitado','Pendiente de activación','Rechazado','Cancelado']);Object.assign(PEOPLE,JSON.parse(bak));setStats(true)}};
+RESULTS.employee={s:()=>screen('drawer')};
+
 
 const markSvg='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>';
 const CFG=window.TOUR_CFG||{title:'Seguro de salud',desc:'Un recorrido por Beneficios en un par de minutos: activa el plan desde Visibilidad, gestiona las inscripciones y mira cómo lo solicita tu equipo.',screen:'catalog',start:'manager',endLeft:{label:'Ver vista de manager',a:'mgr'}};
@@ -326,17 +350,45 @@ function chooser(){screen('approve');center(`<div class="tb"><img src="assets/fa
 function end(title,desc,left){left=left||CFG.endLeft;center(`<div class="tb" style="text-align:center"><img src="assets/factorial-isotipo.png" alt="Factorial" style="height:32px;width:32px;display:block;margin:0 auto"><h4>${title||'Fin del tour'}</h4>${desc?`<p>${desc}</p>`:''}</div><div class="tf"><button class="tb-btn" data-a="${left.a}">${left.label}</button><button class="tb-btn red" data-a="restart">Reiniciar tour</button></div>`)}
 
 async function go(name,n,back){
-  cur=name;i=n;busy=true;const S=T[name][n];S.done=false;navDir=back?-1:1;
+  cur=name;i=n;busy=true;const S=T[name][n];for(let q=S;q;q=q.after)q.done=false;navDir=back?-1:1;
+  setStats(false);
   S.s();const moved=navMoved;navMoved=false;S.pre&&S.pre();
   let ph=S;
-  if(back&&S.act){S.instant&&S.instant();S.done=true;ph=S.after}
+  if(back&&S.act){S.instant&&S.instant();while(ph.after){ph.done=true;ph=ph.after}}
   if(moved){spot.style.opacity=0;pulse.style.opacity=0;tip.style.opacity=0;await sleep(620)}
   await show(S,ph,n);busy=false;
 }
 async function doNext(){
   if(busy)return;const S=T[cur][i];navDir=1;
-  if(S.act&&!S.done){busy=true;await S.act(S);S.done=true;await show(S,S.after,i);busy=false;return}
-  i+1<T[cur].length?go(cur,i+1):(cur==='manager'?chooser():cur==='altas'?end('Altas listas','Tu equipo ya tiene beneficios activos y cada persona conoce su límite de gasto.',{label:'Ver seguro de salud',a:'mgr'}):end())}
+  const P=curPh||S;
+  if(P.act&&!P.done){busy=true;await P.act(S);P.done=true;
+    if(P.after){await show(S,P.after,i);busy=false;return}
+    busy=false}
+  i+1<T[cur].length?go(cur,i+1):finish()}
+function finish(){showResult(endFlow)}
+function endFlow(){
+  if(CFG.hub)return hubEnd();
+  cur==='manager'?chooser():cur==='altas'?end('Altas listas','Tu equipo ya tiene beneficios activos y cada persona conoce su límite de gasto.',{label:'Ver seguro de salud',a:'mgr'}):end()}
+
+/* ---- vista de resultado: la plataforma tal como queda, sin capa oscura; se puede hacer scroll pero no clic.
+        El primer clic (o Next / espacio) cierra el tour y abre el modal de cierre. ---- */
+let inResult=false,resultDone=null;const blk=tour.querySelector('.blocker');
+const mouseSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>';
+async function showResult(done){
+  const R=RESULTS[cur];if(!R){done();return}
+  busy=true;curPh=null;resultDone=done;navDir=1;
+  spot.style.opacity=0;pulse.style.opacity=0;tip.style.opacity=0;tip.style.pointerEvents='none';scr.style.opacity=0;scr.style.pointerEvents='none';
+  W.hidden=true;R.s();const moved=navMoved;navMoved=false;
+  await sleep(moved?700:400);
+  blk.style.pointerEvents='none';
+  resultEl.innerHTML=mouseSvg+'Así queda tu plataforma <span>Haz scroll para verla · un clic termina el tour</span>';resultEl.hidden=false;
+  inResult=true;busy=false}
+function endResult(back){
+  if(!inResult)return;inResult=false;blk.style.pointerEvents='';tip.style.pointerEvents='';resultEl.hidden=true;
+  if(back){go(cur,T[cur].length-1,true);return}
+  const d=resultDone;resultDone=null;d&&d()}
+document.addEventListener('mousedown',e=>{if(inResult)e.preventDefault()},true);
+document.addEventListener('click',e=>{if(!inResult)return;e.preventDefault();e.stopPropagation();endResult()},true);
 function warn(msg){warnEl.textContent='';warnEl.insertAdjacentHTML('afterbegin','<b>!</b>');warnEl.append(msg);warnEl.hidden=false;
   warnEl.style.animation='none';warnEl.offsetWidth;warnEl.style.animation='';
   tip.classList.remove('shake');tip.offsetWidth;tip.classList.add('shake');pulse.classList.remove('hot');pulse.offsetWidth;pulse.classList.add('hot');
@@ -346,7 +398,7 @@ tour.querySelector('.blocker').addEventListener('click',e=>{
   const ce=curPh.click&&curPh.click();
   if(ce){const r=ce.getBoundingClientRect();
     if(e.clientX>=r.left-4&&e.clientX<=r.right+4&&e.clientY>=r.top-4&&e.clientY<=r.bottom+4){doNext();return}}
-  warn(curPh.click?'Haz clic en el botón resaltado para continuar, o usa Next.':'Usa Next para continuar.');
+  warn(curPh.click?'Haz clic en lo que está resaltado para continuar, o usa Next.':'Usa Next para continuar.');
 });
 scr.addEventListener('click',()=>{tip.classList.remove('shake');tip.offsetWidth;tip.classList.add('shake');setTimeout(()=>tip.classList.remove('shake'),500)});
 tour.addEventListener('click',async e=>{
@@ -354,15 +406,17 @@ tour.addEventListener('click',async e=>{
   const S=T[cur]&&T[cur][i];
   if(a==='start')go(CFG.start,0);
   else if(a==='next')doNext();
-  else if(a==='back'){navDir=-1;i>0?go(cur,i-1,true):(cur==='employee'?chooser():welcome())}
+  else if(a==='back'){navDir=-1;i>0?go(cur,i-1,true):(CFG.hub?picker():(cur==='employee'?chooser():welcome()))}
   else if(a==='emp'){spot.style.opacity=0;go('employee',0)}
   else if(a==='mgr'){window.__live=false;go('manager',0)}
-  else if(a==='yes')end('Genial','En el tour completo continuaremos con el alta del dependiente.');
-  else if(a==='no')end('Sin problema','Puedes añadir dependientes más tarde desde Mis beneficios.');
+  else if(a==='yes')showResult(()=>(CFG.hub?hubEnd:end)('Alta en seguro de salud completada','Añadir dependientes se hace desde este mismo panel, con el botón «Añadir dependientes».'));
+  else if(a==='no')showResult(()=>(CFG.hub?hubEnd:end)('Alta en seguro de salud completada','Los dependientes son opcionales: puedes añadirlos cuando quieras desde este mismo panel.'));
   else if(a==='restart'){window.__live=false;welcome()}
 });
 /* ---- teclado: espacio o → avanzan, ← retrocede ---- */
 addEventListener('keydown',e=>{
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+  if(inResult){if(e.key===' '||e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();endResult()}else if(e.key==='ArrowLeft'){e.preventDefault();endResult(true)}return}
   if(e.metaKey||e.ctrlKey||e.altKey||e.shiftKey||e.repeat)return;
   const fwd=e.key===' '||e.key==='Spacebar'||e.key==='ArrowRight',bwd=e.key==='ArrowLeft';
   if(!fwd&&!bwd)return;
@@ -370,8 +424,8 @@ addEventListener('keydown',e=>{
   const b=tip.querySelector(fwd?'[data-a=next],[data-a=start]':'[data-a=back]');
   if(b&&!b.disabled)b.click();
 });
-addEventListener('resize',()=>{if(i>=0&&!busy&&spot.style.opacity==='1'){const S=T[cur][i];reposition((S.act&&S.done?S.after:S).t(),S.act&&S.done?S.after:S)}});
-welcome();
+addEventListener('resize',()=>{if(i>=0&&!busy&&spot.style.opacity==='1'){if(curPh)reposition(curPh.t(),curPh)}});
+CFG.hub?hubStart():welcome();
 const qs=new URLSearchParams(location.search).get('step');if(qs){const [t,n]=qs.split(':');go(t,+n)}
 </script>
 </body></html>

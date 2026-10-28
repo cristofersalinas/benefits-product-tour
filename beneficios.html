@@ -449,10 +449,14 @@ const chevU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke=
 
 /* Catálogo de tours. `key` apunta a los pasos de T; los marcados `soon` aún no existen */
 const REG={
- salud:{key:'manager',ico:'shield',title:'Seguro de salud',sub:'Crear el plan, revisar estados y aprobar',path:'Operaciones › Beneficios',role:'manager'},
- altas:{key:'altas',ico:'users',title:'Altas de colaboradores',sub:'Activar beneficios y definir límites de gasto',path:'Operaciones › Beneficios › Empleados',role:'manager'},
- colab:{key:'employee',ico:'user',title:'Vista de colaborador',sub:'Solicitar el seguro y añadir dependientes',path:'Personal › Mis beneficios',role:'employee'}
+ /* Vista de manager: por caso de uso. El alta de colaboradores es un único flujo que cubre todos los beneficios flexibles. */
+ altas:{key:'altas',ico:'users',title:'Alta de colaboradores',sub:'Comidas, transporte, guardería y bienestar',done:'Alta de colaboradores completada',path:'Operaciones › Beneficios › Empleados',role:'manager'},
+ salud:{key:'manager',ico:'shield',title:'Plan de seguro de salud',sub:'Crear el plan y aprobar inscripciones',done:'Plan de seguro de salud completado',path:'Operaciones › Beneficios › Visibilidad',role:'manager'},
+ /* Vista de colaborador: cada tour es un caso de uso (el nombre no repite la sección) */
+ colab:{key:'employee',ico:'user',title:'Alta en seguro de salud',sub:'Solicitar el seguro y añadir dependientes',done:'Alta en seguro de salud completada',path:'Personal › Mis beneficios › Catálogo',role:'employee'}
 };
+/* Secciones del selector */
+const SECTIONS=[{label:'Vista de manager',tours:['altas','salud']},{label:'Vista de colaborador',tours:['colab']}];
 /* Qué sigue tras cada tour: de lo más conectado a lo menos; el cambio total a la vista de colaborador va al final */
 const NEXT={
  salud:['altas','colab'],
@@ -503,8 +507,7 @@ function submitEmail(){
 function picker(){
   hubTour=null;curPh=null;pulse.style.opacity=0;screen('catalog');
   center(`<div class="tb">${isoImg.replace('margin:0 auto','margin:0')}<h4>Elige un tour</h4><p>Cada uno dura un par de minutos. Empieza por el que más te interese.</p>
-   <div class="grp">Vista de manager</div><div class="chs">${['salud','altas'].map(id=>rowHTML(id)).join('')}</div>
-   <div class="grp">Vista de colaborador</div><div class="chs">${rowHTML('colab')}</div></div>`);
+   ${SECTIONS.map(g=>`<div class="grp">${g.label}</div><div class="chs">${g.tours.map(id=>rowHTML(id)).join('')}</div>`).join('')}</div></div>`);
   tip.classList.add('pick');
 }
 
@@ -516,7 +519,7 @@ function startTour(id){
 /* cierre de cada tour: izquierda = otros tours (de más a menos relacionado, y repetir el actual); derecha = llamada a la acción */
 function hubEnd(title,desc){
   const id=hubTour||'salud',r=REG[id];track('tour_fin',r.title);
-  center(`<div class="tb" style="text-align:center">${isoImg}<h4>${title||r.title+' completado'}</h4><p>${desc||'Sigue con otro tour o cuéntanos si quieres activarlo en tu empresa.'}</p></div>
+  center(`<div class="tb" style="text-align:center">${isoImg}<h4>${title||r.done}</h4><p>${desc||'Sigue con otro tour o cuéntanos si quieres activarlo en tu empresa.'}</p></div>
    <div class="tf"><button class="tb-btn" data-h="menu" id="hubMenuBtn" style="display:flex;align-items:center;justify-content:center;gap:6px">Ver otro tour ${chevU}</button><button class="tb-btn red" data-h="cta">Contactar con Factorial</button></div>
    <div class="hubmenu" id="hubmenu" hidden><div class="chs" style="border:0;border-radius:0">${NEXT[id].map(k=>rowHTML(k,true)).join('')}</div><div class="sep"></div>
     <div class="chs" style="border:0;border-radius:0"><button class="row again" data-h="pick" data-id="${id}"><span class="ic">${svgI('again')}</span><span class="tx"><b>Repetir este tour</b><em>${r.title}</em></span>${chevR}</button></div></div>`);
@@ -613,8 +616,8 @@ tour.addEventListener('click',async e=>{
   else if(a==='back'){navDir=-1;i>0?go(cur,i-1,true):(CFG.hub?picker():(cur==='employee'?chooser():welcome()))}
   else if(a==='emp'){spot.style.opacity=0;go('employee',0)}
   else if(a==='mgr'){window.__live=false;go('manager',0)}
-  else if(a==='yes')showResult(()=>(CFG.hub?hubEnd:end)('Vista de colaborador completada','Añadir dependientes se hace desde este mismo panel, con el botón «Añadir dependientes».'));
-  else if(a==='no')showResult(()=>(CFG.hub?hubEnd:end)('Vista de colaborador completada','Los dependientes son opcionales: puedes añadirlos cuando quieras desde este mismo panel.'));
+  else if(a==='yes')showResult(()=>(CFG.hub?hubEnd:end)('Alta en seguro de salud completada','Añadir dependientes se hace desde este mismo panel, con el botón «Añadir dependientes».'));
+  else if(a==='no')showResult(()=>(CFG.hub?hubEnd:end)('Alta en seguro de salud completada','Los dependientes son opcionales: puedes añadirlos cuando quieras desde este mismo panel.'));
   else if(a==='restart'){window.__live=false;welcome()}
 });
 /* ---- teclado: espacio o → avanzan, ← retrocede ---- */
