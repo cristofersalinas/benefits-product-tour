@@ -1048,6 +1048,62 @@ svEl.addEventListener('click',e=>{
 svEl.addEventListener('input',e=>{const q=e.target.dataset&&e.target.dataset.q;if(q)svErr(q,'')});
 svEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();SV[svKey].submit()}});
 
+/* ================= Personalización de la demo =================
+   Engranaje casi invisible abajo a la izquierda: cambia el nombre de la empresa y el dominio de los correos dummy. */
+const PZ={name:'Industrial Technologies SA',dom:'demo6a9c8805.com'};
+const PZ_SUF=new Set(['sa','sl','slu','sau','sas','srl','sc','scp','sac','sapi','spa','sociedad','anonima','limitada','unipersonal','ltda','ltd','inc','llc','corp','corporation','gmbh','ag','bv','nv','cia','cv','de','y','eirl','lda','sarl','oy','ab','as','plc','co']);
+function pzDomain(n){
+  let t=n.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[.,]/g,'').replace(/&/g,' ').replace(/[^a-z0-9\s-]/g,' ').split(/\s+/).filter(Boolean);
+  while(t.length>1&&PZ_SUF.has(t[t.length-1]))t.pop();
+  return (t.join('').replace(/-/g,'')||'empresa')+'.com';
+}
+function pzInit(root){const q=root.querySelectorAll?root.querySelectorAll('[data-testid="company-selector-button"] span[role="img"] > span'):[];q.forEach(e=>{if(e.textContent.length===1)e.textContent=PZ_NEW.name.charAt(0).toUpperCase()})}
+function pzApply(root){pzInit(root);
+  const a=[PZ.name,'@'+PZ.dom];
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+  while(n=w.nextNode()){const v=n.nodeValue;if(v.includes(a[0])||v.includes(a[1]))n.nodeValue=v.split(a[0]).join(PZ_NEW.name).split(a[1]).join('@'+PZ_NEW.dom)}
+  (root.querySelectorAll?root.querySelectorAll('[title],[aria-label]'):[]).forEach(e=>{['title','aria-label'].forEach(k=>{const v=e.getAttribute(k);if(v&&v.includes(a[0]))e.setAttribute(k,v.split(a[0]).join(PZ_NEW.name))})});
+}
+let PZ_NEW={...PZ};
+const pzObs=new MutationObserver(ms=>{pzObs.disconnect();ms.forEach(m=>{m.addedNodes.forEach(x=>{if(x.nodeType===1)pzApply(x);else if(x.nodeType===3&&x.parentNode)pzApply(x.parentNode)});if(m.type==='characterData'&&m.target.parentNode)pzApply(m.target.parentNode)});pzObs.observe(document.body,{childList:true,subtree:true,characterData:true})});
+function pzSet(name){
+  const nm=(name||'').trim().replace(/\s+/g,' ');
+  PZ_NEW=nm?{name:nm,dom:pzDomain(nm)}:{name:'Industrial Technologies SA',dom:'demo6a9c8805.com'};
+  pzObs.disconnect();pzApply(document.body);PZ.name=PZ_NEW.name;PZ.dom=PZ_NEW.dom;pzObs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  try{nm?localStorage.setItem('pz_name',nm):localStorage.removeItem('pz_name')}catch(e){}
+}
+document.head.insertAdjacentHTML('beforeend',`<style>
+#pzGear{position:fixed;left:262px;bottom:13px;z-index:10002;width:28px;height:28px;border-radius:99px;border:0;background:transparent;color:#0D1626;opacity:.18;display:grid;place-items:center;cursor:pointer;transition:opacity .2s,background .2s}
+#pzGear:hover,#pzGear.on{opacity:.9;background:#fff;box-shadow:0 4px 14px rgba(13,22,38,.14)}
+#pzBox{position:fixed;left:16px;bottom:52px;z-index:10002;width:320px;background:#fff;border:1px solid rgba(1,22,55,.1);border-radius:14px;box-shadow:0 14px 40px rgba(13,22,38,.22);padding:16px;font-family:Inter,system-ui,sans-serif;color:#0D1626;animation:svin .25s both}
+#pzBox[hidden]{display:none}
+#pzBox h4{margin:0 0 2px;font-size:14px;font-weight:600}
+#pzBox p{margin:0 0 12px;font-size:12px;line-height:16px;color:rgba(1,22,55,.6)}
+#pzBox label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}
+#pzBox input{width:100%;box-sizing:border-box;height:38px;border:1px solid rgba(1,22,55,.2);border-radius:10px;padding:0 12px;font:400 14px Inter,system-ui,sans-serif;outline:none}
+#pzBox input:focus{border-color:#0D1626}
+#pzPrev{margin:10px 0 14px;font-size:12px;color:rgba(1,22,55,.65)}
+#pzPrev b{color:#0D1626;font-weight:600}
+#pzBox .r{display:flex;gap:8px;justify-content:flex-end}
+#pzBox button{height:34px;padding:0 14px;border-radius:10px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer;border:1px solid rgba(1,22,55,.18);background:#fff;color:#0D1626}
+#pzBox button.p{background:#E61A42;border-color:#E61A42;color:#fff}
+</style>`);
+const pzGear=document.createElement('button');pzGear.id='pzGear';pzGear.type='button';pzGear.setAttribute('aria-label','Personalizar demo');
+pzGear.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+const pzBox=document.createElement('div');pzBox.id='pzBox';pzBox.hidden=true;
+pzBox.innerHTML=`<h4>Personalizar demo</h4><p>Muestra el nombre de la empresa y su dominio en los correos de los colaboradores de ejemplo.</p><label for="pzIn">Nombre de la empresa</label><input id="pzIn" type="text" placeholder="Ej. Acme Logística S.L." autocomplete="off"><div id="pzPrev"></div><div class="r"><button type="button" id="pzReset">Restablecer</button><button type="button" class="p" id="pzOk">Aplicar</button></div>`;
+document.body.append(pzGear,pzBox);
+const pzIn=pzBox.querySelector('#pzIn'),pzPrev=pzBox.querySelector('#pzPrev');
+const pzPrevUp=()=>{const v=pzIn.value.trim();pzPrev.innerHTML=v?`Correos: <b>juan@${pzDomain(v)}</b>`:'Correos: <b>juan@demo6a9c8805.com</b> (original)'};
+function pzToggle(open){pzBox.hidden=!open;pzGear.classList.toggle('on',open);svOpen=open;if(open){pzIn.value=PZ.name==='Industrial Technologies SA'?'':PZ.name;pzPrevUp();setTimeout(()=>pzIn.focus(),30)}}
+pzGear.addEventListener('click',e=>{e.stopPropagation();pzToggle(pzBox.hidden)});
+pzIn.addEventListener('input',pzPrevUp);
+pzBox.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')pzBox.querySelector('#pzOk').click();if(e.key==='Escape')pzToggle(false)});
+pzBox.querySelector('#pzOk').onclick=()=>{pzSet(pzIn.value);pzToggle(false)};
+pzBox.querySelector('#pzReset').onclick=()=>{pzIn.value='';pzSet('');pzToggle(false)};
+try{const s=localStorage.getItem('pz_name');if(s)pzSet(s)}catch(e){}
+pzObs.observe(document.body,{childList:true,subtree:true,characterData:true});
+
 const markSvg='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>';
 const CFG=window.TOUR_CFG||{title:'Seguro de salud',desc:'Un recorrido por Beneficios en un par de minutos: activa el plan desde Visibilidad, gestiona las inscripciones y mira cómo lo solicita tu equipo.',screen:'catalog',start:'manager',endLeft:{label:'Ver vista de manager',a:'mgr'}};
 function welcome(){i=-1;screen(CFG.screen);center(`<div class="tb" style="text-align:center"><img src="assets/factorial-logo.png" alt="Factorial" style="height:18px;width:auto;display:block;margin:0 auto"><h4>${CFG.title}</h4><p>${CFG.desc}</p></div><div class="tf"><button class="tb-btn red" data-a="start">Empezar el tour</button></div><div class="pw"><img src="assets/factorial-isotipo.png" alt="" style="height:12px;width:12px;vertical-align:-2px;margin-right:6px">Product Tour Factorial - Hecho por Special Benefits Team</div>`)}
