@@ -779,7 +779,14 @@ function rowHTML(id,mini){
   return `<button class="row" ${r.soon?'disabled':`data-h="pick" data-id="${id}"`}><span class="ic">${svgI(r.ico)}</span><span class="tx">${mini?'':`<small>${r.path}</small>`}<b>${r.title}</b><em>${r.sub}</em></span>${r.soon?'<span class="soon">Próximamente</span>':chevR}</button>`;
 }
 
-function hubStart(){curPh=null;i=-1;screen('catalog');hubEmail?picker():gate()}
+/* Enlaces directos: beneficios.html#/seguro-de-salud abre ese tour (tras el correo, si aún no lo dejó) */
+const SLUG={completo:'tour-completo',genm:'general-manager',config:'configuracion',altas:'beneficios',salud:'seguro-de-salud',genc:'general-colaborador',colab:'solicitud-seguro-salud',guarderia:'guarderia'};
+function setHash(id){try{history.replaceState(null,'',location.pathname+location.search+(id?'#/'+SLUG[id]:''))}catch(e){}}
+function deepId(){const m=location.hash.match(/^#\/?([\w-]+)/);return m?(Object.keys(SLUG).find(k=>SLUG[k]===m[1]&&!REG[k].soon)||null):null}
+let deepPending=null;
+function hubStart(){curPh=null;i=-1;screen('catalog');const d=deepId();if(hubEmail)d?startTour(d):picker();else{deepPending=d;gate()}}
+window.addEventListener('hashchange',()=>{if(!hubEmail||svOpen)return;const d=deepId();
+  if(d){if(d==='completo'?!hubSeq:d!==hubTour)startTour(d)}else if(!location.hash||location.hash==='#/')picker()});
 
 function gate(){
   center(`<div class="tb" style="text-align:center">${logoImg}<h4>Product Tour Factorial</h4><p>Déjanos tu correo corporativo para empezar. Así podemos mandarte las novedades de Benefits.</p>
@@ -793,11 +800,11 @@ function submitEmail(){
   const msg=emailProblem(v);
   if(msg){err.textContent=msg;err.hidden=false;box.classList.add('bad');tip.classList.remove('shake');tip.offsetWidth;tip.classList.add('shake');setTimeout(()=>tip.classList.remove('shake'),500);f.focus();return}
   hubEmail=v;try{localStorage.setItem('tour_email',v)}catch(e){}
-  track('registro','Correo corporativo');picker();
+  track('registro','Correo corporativo');if(deepPending){const d=deepPending;deepPending=null;startTour(d)}else picker();
 }
 
 function picker(){
-  hubTour=null;hubSeq=null;diveStack.length=0;showTrail();curPh=null;pulse.style.opacity=0;screen('catalog');
+  setHash(null);hubTour=null;hubSeq=null;diveStack.length=0;showTrail();curPh=null;pulse.style.opacity=0;screen('catalog');
   center(`<div class="tb">${isoImg.replace('margin:0 auto','margin:0')}<h4>Elige un tour</h4><p>Cada uno dura un par de minutos. Empieza por el que más te interese.</p>
    ${SECTIONS.map(g=>`${g.label?`<div class="grp">${g.label}</div>`:'<div style="height:14px"></div>'}<div class="chs">${g.tours.map(id=>rowHTML(id)).join('')}</div>`).join('')}</div></div>`);
   tip.classList.add('pick');
@@ -805,11 +812,11 @@ function picker(){
 
 function startTour(id){
   if(id==='completo')return startSeq();
-  hubTour=id;window.__live=false;track('tour_inicio',REG[id].title);
+  setHash(id);hubTour=id;window.__live=false;track('tour_inicio',REG[id].title);
   spot.style.opacity=0;tip.classList.remove('pick');go(REG[id].key,0);
 }
 function startSeq(){
-  const list=SEQ.filter(k=>!REG[k].soon);hubSeq={list,idx:0};hubTour='completo';track('tour_inicio','Tour completo');
+  const list=SEQ.filter(k=>!REG[k].soon);hubSeq={list,idx:0};hubTour='completo';setHash('completo');track('tour_inicio','Tour completo');
   hubTour=list[0];spot.style.opacity=0;tip.classList.remove('pick');window.__live=false;go(REG[list[0]].key,0);
 }
 /* modal que conecta un tour con el siguiente dentro del tour completo */
