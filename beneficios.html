@@ -358,6 +358,10 @@ async function show(S,ph,n){
   ph.end&&ph.end();
 }
 
+/* el coachmark nativo de la plataforma («Deja que One lo haga por ti») y su foco no forman parte de ningún tour: se quitan de todas las pantallas */
+document.querySelectorAll('[data-f0-coachmark-blocker]').forEach(e=>e.remove());
+document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach(e=>{if(e.textContent.includes('Deja que One'))e.remove()});
+
 /* ---- pasos ---- */
 const T={
  manager:[
@@ -546,6 +550,8 @@ T.genm=[
 const INI=()=>$s('inicio'), CC=()=>$s('ccuentas'), STP=()=>$s('stripe');
 
 /* ---- Inicio: se oculta la barra de entorno de la demo ---- */
+/* ---- Inicio: el coachmark nativo de la plataforma («Deja que One lo haga por ti») y su foco no forman parte del tour: se quitan ---- */
+INI().querySelectorAll('[data-f0-coachmark-blocker],[data-radix-popper-content-wrapper]').forEach(e=>e.remove());
 (function(){const l=leaf(INI(),'Estás viendo la vista de empresa de Factorial.');
   if(l){let e=l;while(e.parentElement&&e.parentElement.textContent.trim().length<80)e=e.parentElement;e.style.display='none'}})();
 

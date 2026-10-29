@@ -328,6 +328,10 @@ async function show(S,ph,n){
   ph.end&&ph.end();
 }
 
+/* el coachmark nativo de la plataforma («Deja que One lo haga por ti») y su foco no forman parte de ningún tour: se quitan de todas las pantallas */
+document.querySelectorAll('[data-f0-coachmark-blocker]').forEach(e=>e.remove());
+document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach(e=>{if(e.textContent.includes('Deja que One'))e.remove()});
+
 /* ---- pasos ---- */
 const T={
  manager:[
