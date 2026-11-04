@@ -494,10 +494,10 @@ T.genc=[
   t:()=>leaf(CAT(),'Beneficios disponibles').parentElement,pos:'bottom',hint:'Pulsa Next para continuar',
   h:'Catálogo de beneficios',p:'Desde aquí pides cada beneficio. Ves cuáles están activos para ti y cuáles puedes solicitar.'},
  {s:()=>{screen('emp-catalog')},
-  t:()=>catCard('Seguro de salud'),pos:'right',dive:{id:'colab'},survey:'salud',hint:'Pulsa Next para seguir con el tour general',
+  t:()=>catCard('Seguro de salud'),pos:'right',survey:'salud',hint:'Pulsa Next para seguir con el tour general',
   h:'Seguro de salud',p:'Solicitar el seguro es un proceso con su propio formulario. Aquí solo lo ves por encima.'},
  {s:()=>{screen('emp-catalog')},
-  t:()=>catCard('Guardería'),pos:'right',dive:{id:'guarderia'},survey:'guarderia',hint:'Pulsa Next para seguir con el tour general',
+  t:()=>catCard('Guardería'),pos:'right',survey:'guarderia',hint:'Pulsa Next para seguir con el tour general',
   h:'Guardería',p:'La guardería también se solicita desde su ficha, con su propio proceso.'},
  {s:()=>{screen('emp-catalog')},
   t:()=>catCard('Bienestar'),pos:'right',hint:'Pulsa Next para terminar',
@@ -518,19 +518,17 @@ function menuSet(on){const w=menuW();if(!w)return;
 const rowJ=()=>upto(leaf(MT(),'Jéssica Rivera'),x=>x.tagName==='TR');
 T.genm=[
  {s:()=>screen('mcuentas'),
-  t:()=>upto(leaf(MC(),'Entidad legal Barcelona'),x=>x.textContent.includes('Valencia')&&x.textContent.includes('Ver cuenta')&&!x.textContent.includes('Cuentas de')),pos:'bottom',dive:{id:'config'},
-  click:()=>leaf(MC(),'Empleados'),
+  t:()=>upto(leaf(MC(),'Entidad legal Barcelona'),x=>x.textContent.includes('Valencia')&&x.textContent.includes('Ver cuenta')&&!x.textContent.includes('Cuentas de')),pos:'bottom',click:()=>leaf(MC(),'Empleados'),
   h:'Una cuenta por entidad legal',p:'Cada entidad tiene su cuenta de gasto: ves el balance y sus tarjetas. Barcelona ya tiene cuenta y Valencia aún no.'},
  {s:()=>{screen('altas');showWiz(null);resetAltas()},
-  t:()=>scrollBox(upto(leaf(ALT,'Bernarda Barrios'),x=>x.tagName==='TABLE')),pos:'top',dive:{id:'altas'},
-  click:()=>leaf(ALT,'Uso'),hint:'Haz clic en la pestaña «Uso»',
+  t:()=>scrollBox(upto(leaf(ALT,'Bernarda Barrios'),x=>x.tagName==='TABLE')),pos:'top',click:()=>leaf(ALT,'Uso'),hint:'Haz clic en la pestaña «Uso»',
   h:'Empleados y sus límites',p:'Cada persona con sus beneficios y su límite de gasto. Dar de alta a alguien tiene su propio tour.'},
  {s:()=>screen('muso'),
   t:()=>upto(leaf(MU(),'Importe total'),x=>x.tagName==='TABLE')||leaf(MU(),'Importe total'),pos:'top',
   click:()=>leaf(MU(),'Visibilidad'),hint:'Haz clic en la pestaña «Visibilidad»',
   h:'Uso y gasto',p:'El gasto de cada persona por beneficio en el mes, listo para exportar y procesar la nómina.'},
  {s:()=>screen('catalog'),
-  t:()=>card(CATM(),'Crear plan'),pos:'right',dive:{id:'salud'},survey:'salud',hint:'Pulsa Next para continuar',
+  t:()=>card(CATM(),'Crear plan'),pos:'right',survey:'salud',hint:'Pulsa Next para continuar',
   h:'Visibilidad de beneficios',p:'Decides qué beneficios ve tu equipo. Algunos, como el seguro de salud, requieren crear un plan.'},
  {s:()=>{screen('mtarjetas');ptlShow('mtarjetas',false)},
   t:()=>scrollBox(upto(leaf(MT(),'Titular de la tarjeta'),x=>x.tagName==='TABLE')),pos:'top',
@@ -912,27 +910,32 @@ const chevU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke=
 const REG={
  completo:{special:true,ico:'play',title:'Tour completo',sub:'Todos los tours, uno tras otro',done:'Tour completo terminado',path:'Manager y colaborador'},
  /* Vista de manager */
+ gmgr:{key:'gmgr',ico:'layout',title:'General',sub:'Vista completa: visibilidad, beneficios y seguro de salud',done:'General completado',path:'Operaciones › Beneficios',role:'Vista de manager'},
  genm:{key:'genm',ico:'layout',title:'General',sub:'Un vistazo a cada sección de Beneficios',done:'General completado',path:'Operaciones › Beneficios',role:'Vista de manager'},
  config:{key:'config',ico:'sliders',title:'Configuración de Benefits',sub:'Cuenta de tarjetas, Stripe y límites',done:'Configuración de Benefits completada',path:'Operaciones › Beneficios › Cuentas',role:'Vista de manager'},
  altas:{key:'altas',ico:'users',title:'Beneficios',sub:'Comidas, transporte, guardería y bienestar',done:'Beneficios completados',path:'Operaciones › Beneficios › Empleados',role:'Vista de manager'},
  salud:{key:'manager',ico:'shield',title:'Seguro de salud',sub:'Crear el plan y aprobar inscripciones',done:'Seguro de salud completado',path:'Operaciones › Beneficios › Visibilidad',role:'Vista de manager'},
  /* Vista de colaborador */
+ gcol:{key:'gcol',ico:'layout',title:'General',sub:'Vista completa: gastos, seguro de salud y guardería',done:'General completado',path:'Personal › Mis beneficios',role:'Vista de colaborador'},
  genc:{key:'genc',ico:'layout',title:'General',sub:'Gastos, tarjeta y catálogo de beneficios',done:'General completado',path:'Personal › Mis beneficios',role:'Vista de colaborador'},
  colab:{key:'employee',ico:'user',title:'Solicitud de seguro de salud',sub:'Solicitar el seguro y añadir dependientes',done:'Solicitud de seguro de salud completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'},
  guarderia:{key:'guarderia',ico:'home',title:'Solicitud de guardería',sub:'Solicitar la guardería y ver su gasto',done:'Solicitud de guardería completada',path:'Personal › Mis beneficios › Catálogo',role:'Vista de colaborador'}
 };
 /* Secciones del selector: el tour completo va arriba; después cada vista, con sus tours por caso de uso */
-const SECTIONS=[{label:null,tours:['completo']},{label:'Vista de manager',tours:['genm','altas','salud','config']},{label:'Vista de colaborador',tours:['genc','colab','guarderia']}];
+const SECTIONS=[{label:null,tours:['completo']},{label:'Vista de manager',tours:['gmgr','config']},{label:'Vista de colaborador',tours:['gcol']}];
 /* Orden del tour completo: primero manager (general, configuración, beneficios, seguro) y luego colaborador. Los que no tienen contenido se saltan. */
 const SEQ=['genm','config','altas','salud','genc','colab','guarderia'];
 /* Qué sigue tras cada tour: de lo más conectado a lo menos; el cambio total de vista va al final */
 const NEXT={
- genm:['config','altas','salud','genc','colab'],
- config:['altas','genm','salud','genc','colab'],
- altas:['config','salud','genm','genc','colab'],
- salud:['altas','config','genm','colab','genc'],
- genc:['colab','genm','altas','salud','config'],
- colab:['genc','salud','altas','genm','config']
+ gmgr:['config','gcol'],
+ config:['gmgr','gcol'],
+ gcol:['gmgr','config'],
+ genm:['gmgr','config'],
+ altas:['gmgr','config'],
+ salud:['gmgr','config'],
+ genc:['gcol','gmgr'],
+ colab:['gcol','gmgr'],
+ guarderia:['gcol','gmgr']
 };
 /* ---- Correos: solo corporativos y reales. Se rechazan personales, temporales, buzones genéricos y dominios de ejemplo ---- */
 const FREE_SLD=['gmail','googlemail','hotmail','outlook','live','msn','yahoo','ymail','icloud','me','mac','proton','protonmail','pm','aol','gmx','mail','yandex','zoho','tutanota','tuta','fastmail','rocketmail','inbox'];
@@ -976,7 +979,7 @@ function rowHTML(id,mini){
 }
 
 /* Enlaces directos: beneficios.html#/seguro-de-salud abre ese tour (tras el correo, si aún no lo dejó) */
-const SLUG={completo:'tour-completo',genm:'general-manager',config:'configuracion',altas:'beneficios',salud:'seguro-de-salud',genc:'general-colaborador',colab:'solicitud-seguro-salud',guarderia:'guarderia'};
+const SLUG={completo:'tour-completo',gmgr:'general-manager',config:'configuracion',altas:'beneficios',salud:'seguro-de-salud',gcol:'general-colaborador',colab:'solicitud-seguro-salud',guarderia:'guarderia'};
 function setHash(id){try{history.replaceState(null,'',location.pathname+location.search+(id?'#/'+SLUG[id]:''))}catch(e){}}
 function deepId(){const m=location.hash.match(/^#\/?([\w-]+)/);return m?(Object.keys(SLUG).find(k=>SLUG[k]===m[1]&&!REG[k].soon)||null):null}
 let deepPending=null;
@@ -1050,6 +1053,11 @@ function diveBack(){
 
 /* cierre de cada tour: izquierda = otros tours (de más a menos relacionado, y repetir el actual); derecha = llamada a la acción */
 /* qué encuesta de calificación se muestra al terminar cada tour que genera ingresos */
+/* tours generales unificados: cada vista se recorre de una vez, con su vista de resultado al final */
+T.gmgr=[...T.genm,...T.altas,...T.manager];
+T.gcol=[...T.genc,...T.employee,...T.guarderia];
+RESULTS.gmgr=RESULTS.manager;
+RESULTS.gcol=RESULTS.guarderia;
 const SURV_FOR={salud:'salud',colab:'salud',altas:'beneficios',genm:'beneficios',genc:'beneficios',guarderia:'guarderia'};
 function hubEnd(title,desc,_enc){
   const id=hubTour||'salud',r=REG[id];
