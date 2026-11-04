@@ -1163,7 +1163,10 @@ function svErr(q,msg){const w=svEl.querySelector('[data-q="'+q+'"]');if(!w)retur
 function svClear(){svEl.querySelectorAll('.sv-err').forEach(e=>e.hidden=true);svEl.querySelectorAll('.sv-in.bad').forEach(e=>e.classList.remove('bad'))}
 
 /* ---- ciclo de vida ---- */
+/* encuestas desactivadas en el product tour: se salta directamente al cierre del tour */
+const SURVEYS_ON=false;
 function surveyRun(key,after){
+  if(!SURVEYS_ON){after&&after();return}
   svKey=key;svAfter=after;svOpen=true;busy=true;curPh=null;
   spot.style.opacity=0;pulse.style.opacity=0;tip.style.opacity=0;tip.style.pointerEvents='none';
   track('encuesta_mostrada',key);
@@ -1316,7 +1319,7 @@ pzObs.observe(document.body,{childList:true,subtree:true,characterData:true});
 
 const markSvg='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>';
 const CFG=window.TOUR_CFG||{title:'Seguro de salud',desc:'Un recorrido por Beneficios en un par de minutos: activa el plan desde Visibilidad, gestiona las inscripciones y mira cómo lo solicita tu equipo.',screen:'catalog',start:'manager',endLeft:{label:'Ver vista de manager',a:'mgr'}};
-function welcome(){i=-1;screen(CFG.screen);center(`<div class="tb" style="text-align:center"><img src="assets/factorial-logo.png" alt="Factorial" style="height:18px;width:auto;display:block;margin:0 auto"><h4>${CFG.title}</h4><p>${CFG.desc}</p></div><div class="tf"><button class="tb-btn red" data-a="start">Empezar el tour</button></div><div class="pw"><img src="assets/factorial-isotipo.png" alt="" style="height:12px;width:12px;vertical-align:-2px;margin-right:6px">Product Tour Factorial - Hecho por Special Benefits Team</div>`)}
+function welcome(){i=-1;screen(CFG.screen);center(`<div class="tb" style="text-align:center"><img src="assets/factorial-logo.png" alt="Factorial" style="height:18px;width:auto;display:block;margin:0 auto"><h4>${CFG.title}</h4><p>${CFG.desc}</p></div><div class="tf"><button class="tb-btn red" data-a="start">Empezar el tour</button></div>`)}
 function chooser(){screen('approve');center(`<div class="tb"><img src="assets/factorial-isotipo.png" alt="Factorial" style="height:28px;width:28px;display:block"><h4>Sigue con otra vista</h4><p>Ya viste cómo se configura el seguro. Ahora mira cómo lo vive cada perfil.</p>
  <div class="chs">
   <button class="row" data-a="emp"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></span><span class="tx"><small>Personal › Mis beneficios</small><b>Vista de colaborador</b><em>Solicitar el seguro y añadir dependientes</em></span><svg class="chv" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
