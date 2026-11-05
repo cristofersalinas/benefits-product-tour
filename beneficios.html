@@ -1003,7 +1003,7 @@ function submitEmail(){
 }
 
 function picker(){
-  setHash(null);hubTour=null;hubSeq=null;diveStack.length=0;showTrail();curPh=null;pulse.style.opacity=0;screen('catalog');
+  document.getElementById('jump').hidden=true;setHash(null);hubTour=null;hubSeq=null;diveStack.length=0;showTrail();curPh=null;pulse.style.opacity=0;screen('catalog');
   center(`<div class="tb">${isoImg.replace('margin:0 auto','margin:0')}<h4>Elige un tour</h4><p>Cada uno dura un par de minutos. Empieza por el que más te interese.</p>
    ${SECTIONS.map(g=>g.label?`<div class="grp">${g.label}</div><div class="pane"><div class="chs sub">${g.tours.map(id=>rowHTML(id)).join('')}</div></div>`:`<div style="height:14px"></div><div class="chs">${g.tours.map(id=>rowHTML(id)).join('')}</div>`).join('')}</div></div>`);
   tip.classList.add('pick');
@@ -1012,10 +1012,25 @@ function picker(){
   setTimeout(mk,60);window.addEventListener('resize',mk);
 }
 
+/* desplegable del tour general: por defecto recorre todo; desde aquí se salta al tour guiado de un módulo */
+const JUMP={gmgr:[['altas','Beneficios'],['salud','Seguro de salud']],gcol:[['colab','Solicitud de seguro de salud'],['guarderia','Guardería']]};
+document.head.insertAdjacentHTML('beforeend',`<style>
+#jump{position:fixed;left:16px;bottom:54px;z-index:10003;height:34px;padding:0 30px 0 12px;border:1px solid rgba(1,22,55,.14);border-radius:10px;background:#fff;font:500 13px Inter,system-ui,sans-serif;color:#0D1626;box-shadow:0 4px 14px rgba(13,22,38,.12);cursor:pointer;appearance:auto}
+#jump[hidden]{display:none}
+</style>`);
+document.body.insertAdjacentHTML('beforeend','<select id="jump" hidden aria-label="Saltar a un módulo"></select>');
+function jumpShow(id){
+  const sel=document.getElementById('jump');
+  if(!JUMP[id]){sel.hidden=true;return}
+  sel.innerHTML=`<option value="">General (todo)</option>`+JUMP[id].map(([k,t])=>`<option value="${k}">Solo: ${t}</option>`).join('');
+  sel.value='';sel.hidden=false;
+}
+document.getElementById('jump').addEventListener('keydown',e=>e.stopPropagation());
+document.getElementById('jump').addEventListener('change',e=>{const v=e.target.value;if(!v)return;diveStack.length=0;showTrail();startTour(v)});
 function startTour(id){
   if(id==='completo')return startSeq();
   setHash(id);hubTour=id;window.__live=false;track('tour_inicio',REG[id].title);
-  spot.style.opacity=0;tip.classList.remove('pick');go(REG[id].key,0);
+  spot.style.opacity=0;tip.classList.remove('pick');jumpShow(id);go(REG[id].key,0);
 }
 function startSeq(){
   const list=SEQ.filter(k=>!REG[k].soon);hubSeq={list,idx:0};hubTour='completo';setHash('completo');track('tour_inicio','Tour completo');
@@ -1067,7 +1082,7 @@ function hubEnd(title,desc,_enc){
   if(hubSeq&&hubSeq.idx+1<hubSeq.list.length)return seqNextModal();
   if(hubSeq){title='Tour completo terminado';desc='Recorriste todos los tours disponibles. Cuéntanos si quieres activarlo en tu empresa.'}
   center(`<div class="tb" style="text-align:center">${isoImg}<h4>${title||r.done}</h4><p>${desc||'Sigue con otro tour o cuéntanos si quieres activarlo en tu empresa.'}</p></div>
-   <div class="tf"><button class="tb-btn" data-h="menu" id="hubMenuBtn" style="display:flex;align-items:center;justify-content:center;gap:6px">Ver otro tour ${chevU}</button><button class="tb-btn red" data-h="cta">Contactar con Factorial</button></div>
+   <div class="tf"><button class="tb-btn" data-h="picker" id="hubMenuBtn">Volver al inicio</button><button class="tb-btn red" data-h="cta">Contactar con Factorial</button></div>
    <div class="hubmenu" id="hubmenu" hidden><div class="chs" style="border:0;border-radius:0">${(NEXT[id]||[]).filter(k=>!REG[k].soon).map(k=>rowHTML(k,true)).join('')}</div><div class="sep"></div>
     <div class="chs" style="border:0;border-radius:0"><button class="row again" data-h="pick" data-id="${id}"><span class="ic">${svgI('again')}</span><span class="tx"><b>Repetir este tour</b><em>${r.title}</em></span>${chevR}</button></div></div>`);
   /* la lista mide siempre dos filas y media: así hay una fila a medias que invita a hacer scroll */
